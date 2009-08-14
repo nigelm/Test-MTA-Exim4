@@ -13,6 +13,7 @@ inc/Module/Install/WriteAll.pm
 lib/Test/MTA/Exim4.pm
 Makefile.PL
 MANIFEST
+MANIFEST.SKIP
 META.yml
 README
 t/00-load.t

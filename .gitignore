@@ -10,3 +10,4 @@ Test-MTA-Exim4-*
 cover_db
 MANIFEST.bak
 inc
+META.yml
