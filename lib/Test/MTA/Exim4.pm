@@ -263,6 +263,114 @@ sub has_not_capability {
 
 # ------------------------------------------------------------------------
 
+=head2 routes_ok 
+
+TODO
+
+=cut
+
+sub routes_ok {
+    my $self = shift;
+    my $addr = shift;
+    my $msg  = shift;
+
+    $self->_croak('Requires an address') unless ($addr);
+
+    # run the check
+    my $res = $self->_run_exim_bt($addr);
+
+    # pad the msg if not specified
+    $msg ||= sprintf( 'Can route to %s', $addr );
+
+    # OK if there are no undeliverables and there are deliverables
+    $self->test->ok( ( $res->{deliverable} && !$res->{undeliverable} ), $msg );
+}
+
+# ------------------------------------------------------------------------
+
+=head2 routes_as_ok 
+
+TODO
+
+
+=cut
+
+sub routes_as_ok {
+    my $self   = shift;
+    my $addr   = shift;
+    my $target = shift;
+    my $msg    = shift;
+
+    $self->_croak('Requires an address') unless ($addr);
+
+    # run the check
+    my $res = $self->_run_exim_bt($addr);
+
+    # pad the msg if not specified
+    $msg ||= sprintf( 'Can route to %s', $addr );
+
+    # TODO
+    
+}
+
+# ------------------------------------------------------------------------
+
+=head2 discards_ok 
+
+TODO
+
+=cut
+
+sub discards_ok {
+    my $self = shift;
+    my $addr = shift;
+    my $msg  = shift;
+
+    $self->_croak('Requires an address') unless ($addr);
+
+    # run the check
+    my $res = $self->_run_exim_bt($addr);
+
+    # pad the msg if not specified
+    $msg ||= sprintf( 'Can route to %s', $addr );
+
+    # OK if there is a total of one address and it was discarded
+    $self->test->ok(
+        (
+                 ( $res->{total} == 1 )
+              && ( values %{ $res->{addresses} } )[0]->{discarded}
+        ),
+        $msg
+    );
+}
+
+# ------------------------------------------------------------------------
+
+=head2 undeliverable_ok 
+
+TODO
+
+=cut
+
+sub undeliverable_ok {
+    my $self = shift;
+    my $addr = shift;
+    my $msg  = shift;
+
+    $self->_croak('Requires an address') unless ($addr);
+
+    # run the check
+    my $res = $self->_run_exim_bt($addr);
+
+    # pad the msg if not specified
+    $msg ||= sprintf( 'Can route to %s', $addr );
+
+    # OK if there are no deliverables and there are undeliverables
+    $self->test->ok( ( $res->{undeliverable} && !$res->{deliverable} ), $msg );
+}
+
+# ------------------------------------------------------------------------
+
 =head1 INTERNAL METHODS
 
 These methods are not intended to be run by end users, but are exposed.
@@ -373,6 +481,97 @@ sub _run_exim_bv {
     else {
         $self->{_state}{config}{ok} = 0;
     }
+}
+
+# ------------------------------------------------------------------------
+
+=head2 _run_exim_bt
+
+Runs C<exim -bt> (address test mode) with the appropriate configuration
+file, to check how the single address passed routes. The output of the
+command is parsed and passed back in the results.
+
+=cut
+
+sub _run_exim_bt {
+    my $self    = shift;
+    my $address = shift;
+    my $sender  = shift;
+
+    # check for sanity... make sure we have a valid binary + config
+    $self->_run_exim_bv unless ( $self->{_state}{config}{ok} );
+    $self->_croak('No exim version number found')
+      unless ( $self->{_state}{config}{ok} );
+
+    my @options = ('-bt');
+    push( @options, '-f', $sender ) if ( defined($sender) );
+    push( @options, '--', $address );
+
+    # run command - use a -- divider to prevent funkiness in the address
+    my ( $success, $error_code, $full_buf, $stdout_buf, $stderr_buf ) =
+      $self->_run_exim_command(@options);
+
+    # as exim uses the exit value to signify how well things worked, and
+    # IPC::Cmd obscures this somewhat, we are just going to ignore it!
+    # and parse the output to see what happened...
+    my @lines  = @{$stdout_buf};
+    my $result = {
+        all_ok        => $success,
+        deliverable   => 0,
+        undeliverable => 0,
+        total         => 0,
+        addresses     => {}
+    };
+    while ( scalar(@lines) ) {
+        my $line = shift @lines;
+        next if ( $line =~ /^\s*$/ );
+
+        # this line should be one of:-
+        #   <addr> is undeliverable
+        #   <addr> is discarded
+        #   <addr> -> <target> + more info on next lines
+        #   <addr> + more info on next lines
+        if ( $line =~ /^(.*) is undeliverable$/ ) {
+            $result->{undeliverable}++;
+            $result->{total}++;
+            $result->{addresses}{$1} = { ok => 0 };
+            next;
+        }
+        $result->{deliverable}++;
+        $result->{total}++;
+        my $res = { ok => 1, discarded => 0, data => [] };
+        if ( $line =~ /^(.*) -\> (.*)$/ ) {
+            $res->{target} = $2;
+            $result->{addresses}{$1} = $res;
+        }
+        elsif ( $line =~ /^(.*) is discarded$/ ) {
+            $res->{discarded} = 1;
+            $result->{addresses}{$1} = $res;
+        }
+        else {
+            $result->{addresses}{$line} = $res;
+        }
+
+        # mop up subsequent lines
+        while ( scalar(@lines) && ( $lines[0] =~ /^\s/ ) ) {
+            $line = shift @lines;
+            if ( $line =~ /^\s+\<-- (.*)/ ) {
+                $res->{original} = $1;
+            }
+            elsif ( $line =~ /^\s+transport = (.*)/ ) {
+                $res->{transport} = $1;
+            }
+            elsif ( $line =~ /^\s+router = (.*), transport = (.*)/ ) {
+                $res->{router}    = $1;
+                $res->{transport} = $2;
+            }
+            else {
+                push( @{ $res->{data} }, $line );
+            }
+        }
+    }
+
+    return $result;
 }
 
 # ------------------------------------------------------------------------
