@@ -1,55 +1,155 @@
-Test-MTA-Exim4
+NAME
+    Test::MTA::Exim4 - Test Anything interface for testing Exim4
+    configurations
 
-The README is used to introduce the module and provide instructions on
-how to install the module, any machine dependencies it may have (for
-example C compilers and installed libraries) and any other information
-that should be provided before the module is installed.
+VERSION
+    Version 0.01
 
-A README file is required for CPAN modules since CPAN extracts the README
-file from a module distribution so that people browsing the archive
-can use it to get an idea of the module's uses. It is usually a good idea
-to provide version information here so that people can decide whether
-fixes for the module are worth downloading.
+SYNOPSIS
+    Test::MTA::Exim4 allows the testing of an "exim" installation and
+    configuration using the perl TAP (Test Anything Protocol) methodology.
 
+    This allows the writing of some simple test scripts which can check for
+    features of "exim" and check that this configuration routes, accepts or
+    rejects mail as you would expect. As such it is an ideal system for
+    creating a test suite for your mail configuration allowing you to check
+    that there are no unexpected regressions when you make a change.
 
-INSTALLATION
+METHODS
+  new
+        my $exim = Test::MTA::Exim4->new( \%fields );
 
-To install this module, run the following commands:
+    Create a new exim configuration testing object. You may pass
+    configuration information in as a hash reference - this is the only
+    point at which the locations of the exim binary and configuration file
+    may be set.
 
-	perl Makefile.PL
-	make
-	make test
-	make install
+  reset
+    Resets the internal state. Not sure when this might be useful!
 
-SUPPORT AND DOCUMENTATION
+  config_ok
+    Checks that "exim" considers the configuration file as syntactically
+    valid. The config file must be specified when "new" is called, otherwise
+    the default is used.
 
-After installing, you can find documentation for this module with the
-perldoc command.
+  exim_version
+    Returns the version of "exim" seen when the configuration was checked.
+    This is intended for use within your own tests for appropriate versions,
+    for example:-
 
-    perldoc Test::MTA::Exim4
+        # ensure we are running exim 4.69 or later
+        ok(($exim->exim_version gt '4.69'), 'Exim version check');
 
-You can also look for information at:
+  exim_build
+    Returns the build number of "exim" seen when the configuration was
+    checked. This is intended for use within your own tests for appropriate
+    versions/builds.
 
-    RT, CPAN's request tracker
-        http://rt.cpan.org/NoAuth/Bugs.html?Dist=Test-MTA-Exim4
+        # ensure we are running exim 4.69 or later
+        ok(($exim->exim_version gt '4.69'), 'Exim version check');
 
-    AnnoCPAN, Annotated CPAN documentation
-        http://annocpan.org/dist/Test-MTA-Exim4
+  has_capability
+        $exim->has_capability($type, $what, $optional_msg)
+        $exim->has_capability('lookup', 'lsearch', 'Has lsearch capability')
 
-    CPAN Ratings
-        http://cpanratings.perl.org/d/Test-MTA-Exim4
+    Checks that "exim" has the appropriate capability. This is taken from
+    the lists of capabilities listed by "exim -bV"
 
-    Search CPAN
-        http://search.cpan.org/dist/Test-MTA-Exim4/
+    The types of capability are:-
 
+    *   support_for
 
-COPYRIGHT AND LICENCE
+    *   lookup
 
-Copyright (C) 2009 Nigel Metheringham
+    *   authenticator
 
-This program is free software; you can redistribute it and/or modify it
-under the terms of either: the GNU General Public License as published
-by the Free Software Foundation; or the Artistic License.
+    *   router
 
-See http://dev.perl.org/licenses/ for more information.
+    *   transport
+
+    The items within a capability are processed to be lowercase alphanumeric
+    only - so "iconv" rather than "iconv()" as output by exim. The subitems
+    (for example "maildir" is a subitem of "appendfile") are treated as
+    separately checkable items.
+
+  has_not_capability
+    Precisely the opposite of has_capability with an opposite test - so
+    fails if this does exist.
+
+INTERNAL METHODS
+    These methods are not intended to be run by end users, but are exposed.
+
+  _run_exim_command
+    Runs an exim instance with the appropriate config file and
+
+  _run_exim_bv
+    Runs "exim -bV" with the appropriate configuration file, to check that
+    the configuration file is valid. The output of the command is parsed and
+    stashed and used to provide the functions to check versions numbers and
+    capabilities.
+
+  _diag
+    Spits out some Test::Builder diagnostics for the last run command. Used
+    internally by some tests on failure. The output data is the last error
+    seen by IPC::Cmd and the complete output of the command.
+
+AUTHOR
+    Nigel Metheringham, "<nigelm at cpan.org>"
+
+BUGS
+    Please report any bugs or feature requests to "bug-test-mta-exim4 at
+    rt.cpan.org", or through the web interface at
+    <http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-MTA-Exim4>. I will
+    be notified, and then you'll automatically be notified of progress on
+    your bug as I make changes.
+
+SUPPORT
+    You can find documentation for this module with the perldoc command.
+
+        perldoc Test::MTA::Exim4
+
+  Warning
+        At this point the module is *not* released to CPAN - still in early
+        development and subject to change in a big way (including renaming,
+        or even just dropping it). However when/if it is released, further
+        information will be found at these locations
+
+    You can also look for information at:
+
+    *   github - source control system (latest development version will
+        always be here)
+
+        <http://rt.cpan.org/NoAuth/Bugs.html?Dist=Test-MTA-Exim4>
+
+    *   RT: CPAN's request tracker
+
+        <http://rt.cpan.org/NoAuth/Bugs.html?Dist=Test-MTA-Exim4>
+
+    *   AnnoCPAN: Annotated CPAN documentation
+
+        <http://annocpan.org/dist/Test-MTA-Exim4>
+
+    *   CPAN Ratings
+
+        <http://cpanratings.perl.org/d/Test-MTA-Exim4>
+
+    *   Search CPAN
+
+        <http://search.cpan.org/dist/Test-MTA-Exim4/>
+
+ACKNOWLEDGEMENTS
+    The module draws very strongly on the Test::Exim4::Routing module by Max
+    Maischein. It is structured differently, and is currently very
+    experimental (meaning the API may change in a big way), so these changes
+    were made as a new module in a name space that is intended for use by
+    similar modules for other MTAs.
+
+COPYRIGHT & LICENSE
+    Copyright 2009 Nigel Metheringham.
+
+    This program is free software; you can redistribute it and/or modify it
+    under the terms of either: the GNU General Public License as published
+    by the Free Software Foundation; or the Artistic License.
+
+    See http://dev.perl.org/licenses/ for more information.
 

@@ -5,7 +5,6 @@ use strict;
 use base qw(Class::Accessor::Fast);
 use IPC::Cmd qw[can_run run];
 use Test::Builder;
-use Data::Dumper;
 
 __PACKAGE__->mk_accessors(qw[ debug]);
 __PACKAGE__->mk_ro_accessors(qw[exim_path config_file test timeout]);
@@ -25,16 +24,21 @@ our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
+L<Test::MTA::Exim4> allows the testing of an C<exim> installation
+and configuration using the perl TAP (Test Anything Protocol)
+methodology.
 
-Perhaps a little code snippet.
-
-    use Test::MTA::Exim4;
-
-    my $foo = Test::MTA::Exim4->new();
-    ...
+This allows the writing of some simple test scripts which can check for
+features of C<exim> and check that this configuration routes, accepts
+or rejects mail as you would expect. As such it is an ideal system for
+creating a test suite for your mail configuration allowing you to check
+that there are no unexpected regressions when you make a change.
 
 =head1 METHODS
+
+=cut
+
+# ------------------------------------------------------------------------
 
 =head2 new
 
@@ -80,6 +84,8 @@ sub new {
     return $self;
 }
 
+# ------------------------------------------------------------------------
+
 =head2 reset
 
 Resets the internal state.  Not sure when this might be useful!
@@ -93,6 +99,8 @@ sub reset {
 
     return $self;
 }
+
+# ------------------------------------------------------------------------
 
 =head2 config_ok 
 
@@ -121,6 +129,52 @@ sub config_ok {
     $self->test->ok( $self->{_state}{config}{ok}, $msg ) || $self->_diag;
 }
 
+# ------------------------------------------------------------------------
+
+=head2 exim_version 
+
+Returns the version of C<exim> seen when the configuration was checked.
+This is intended for use within your own tests for appropriate
+versions, for example:-
+
+    # ensure we are running exim 4.69 or later
+    ok(($exim->exim_version gt '4.69'), 'Exim version check');
+
+=cut
+
+sub exim_version {
+    my $self = shift;
+    my $msg  = shift;
+
+    $self->_run_exim_bv;
+
+    return $self->{_state}{exim_version};
+}
+
+# ------------------------------------------------------------------------
+
+=head2 exim_build 
+
+Returns the build number of C<exim> seen when the configuration was
+checked. This is intended for use within your own tests for appropriate
+versions/builds.
+
+    # ensure we are running exim 4.69 or later
+    ok(($exim->exim_version gt '4.69'), 'Exim version check');
+
+=cut
+
+sub exim_build {
+    my $self = shift;
+    my $msg  = shift;
+
+    $self->_run_exim_bv;
+
+    return $self->{_state}{exim_build};
+}
+
+# ------------------------------------------------------------------------
+
 =head2 has_capability 
 
     $exim->has_capability($type, $what, $optional_msg)
@@ -133,15 +187,15 @@ The types of capability are:-
 
 =over 4
 
-=item support_for
+=item * support_for
 
-=item lookup
+=item * lookup
 
-=item authenticator
+=item * authenticator
 
-=item router
+=item * router
 
-=item transport
+=item * transport
 
 =back
 
@@ -164,7 +218,7 @@ sub has_capability {
     $self->_croak('Capability requires a thing to check') unless ($what);
 
     # pad the msg if not specified
-    $msg ||= sprintf( 'Checking %s/%s capability', $type, $what );
+    $msg ||= sprintf( 'Checking for %s/%s capability', $type, $what );
 
     $self->test->ok(
         (
@@ -174,6 +228,8 @@ sub has_capability {
         $msg
     );
 }
+
+# ------------------------------------------------------------------------
 
 =head2 has_not_capability 
 
@@ -194,7 +250,7 @@ sub has_not_capability {
     $self->_croak('Capability requires a thing to check') unless ($what);
 
     # pad the msg if not specified
-    $msg ||= sprintf( 'Checking %s/%s capability', $type, $what );
+    $msg ||= sprintf( 'Checking for lack of %s/%s capability', $type, $what );
 
     $self->test->ok(
         (
@@ -205,11 +261,15 @@ sub has_not_capability {
     );
 }
 
+# ------------------------------------------------------------------------
+
 =head1 INTERNAL METHODS
 
 These methods are not intended to be run by end users, but are exposed.
 
 =head2 _run_exim_command
+
+Runs an exim instance with the appropriate config file and 
 
 =cut
 
@@ -231,6 +291,13 @@ sub _run_exim_command {
         #timeout => $self->{timeout}
     );
 
+    # as documented in IPC::Cmd, the buffer returns are an arrayref
+    # unexpectedly, that array has a single element with a slurped string
+    # so we reprocess into a one line per element form
+    $full_buf   = [ map { ( split( /\r?\n/, $_ ) ) } @{ $full_buf   || [] } ];
+    $stdout_buf = [ map { ( split( /\r?\n/, $_ ) ) } @{ $stdout_buf || [] } ];
+    $stderr_buf = [ map { ( split( /\r?\n/, $_ ) ) } @{ $stderr_buf || [] } ];
+
     $self->{_state}{last_error}  = $error_code;
     $self->{_state}{last_output} = $full_buf;
 
@@ -238,6 +305,11 @@ sub _run_exim_command {
 }
 
 =head2 _run_exim_bv
+
+Runs C<exim -bV> with the appropriate configuration file, to check that
+the configuration file is valid. The output of the command is parsed
+and stashed and used to provide the functions to check versions numbers
+and capabilities.
 
 =cut
 
@@ -275,9 +347,9 @@ sub _run_exim_bv {
               )
             {
                 my $type = lc($1);
+                my $res  = lc($2);
                 $type =~ tr/a-z/_/cs;
                 $type =~ s/s$//;        # strip trailing s
-                my $res = lc($2);
                 $res =~ tr|a-z0-9_ /||cd;
                 my $table = { map { $_ => 1 } ( split( /[\s\/]/, $res ) ) };
                 $self->{_state}{config}{$type} = $table;
@@ -298,6 +370,10 @@ sub _run_exim_bv {
 }
 
 =head2 _diag
+
+Spits out some L<Test::Builder> diagnostics for the last run command.
+Used internally by some tests on failure. The output data is the last
+error seen by L<IPC::Cmd> and the complete output of the command.
 
 =cut
 
@@ -331,18 +407,30 @@ the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-MTA-E
 automatically be notified of progress on your bug as I make changes.
 
 
-
-
 =head1 SUPPORT
 
 You can find documentation for this module with the perldoc command.
 
     perldoc Test::MTA::Exim4
 
+=head2 Warning
+
+=over 4
+
+At this point the module is *not* released to CPAN - still in early
+development and subject to change in a big way (including renaming, or
+even just dropping it). However when/if it is released, further
+information will be found at these locations
+
+=back
 
 You can also look for information at:
 
 =over 4
+
+=item * github - source control system (latest development version will always be here)
+
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Test-MTA-Exim4>
 
 =item * RT: CPAN's request tracker
 
@@ -364,6 +452,12 @@ L<http://search.cpan.org/dist/Test-MTA-Exim4/>
 
 
 =head1 ACKNOWLEDGEMENTS
+
+The module draws very strongly on the L<Test::Exim4::Routing> module by
+Max Maischein. It is structured differently, and is currently very
+experimental (meaning the API may change in a big way), so these
+changes were made as a new module in a name space that is intended for
+use by similar modules for other MTAs.
 
 
 =head1 COPYRIGHT & LICENSE
