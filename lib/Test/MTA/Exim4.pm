@@ -267,6 +267,10 @@ sub has_not_capability {
 
 These methods are not intended to be run by end users, but are exposed.
 
+=cut
+
+# ------------------------------------------------------------------------
+
 =head2 _run_exim_command
 
 Runs an exim instance with the appropriate config file and 
@@ -303,6 +307,8 @@ sub _run_exim_command {
 
     return ( $success, $error_code, $full_buf, $stdout_buf, $stderr_buf );
 }
+
+# ------------------------------------------------------------------------
 
 =head2 _run_exim_bv
 
@@ -349,8 +355,8 @@ sub _run_exim_bv {
                 my $type = lc($1);
                 my $res  = lc($2);
                 $type =~ tr/a-z/_/cs;
-                $type =~ s/s$//;        # strip trailing s
-                $res =~ tr|a-z0-9_ /||cd;
+                $type =~ s/s$//;             # strip trailing s
+                $res  =~ tr|a-z0-9_ /||cd;
                 my $table = { map { $_ => 1 } ( split( /[\s\/]/, $res ) ) };
                 $self->{_state}{config}{$type} = $table;
             }
@@ -368,6 +374,8 @@ sub _run_exim_bv {
         $self->{_state}{config}{ok} = 0;
     }
 }
+
+# ------------------------------------------------------------------------
 
 =head2 _diag
 
@@ -395,6 +403,8 @@ sub _diag {
         )
     );
 }
+
+# ------------------------------------------------------------------------
 
 =head1 AUTHOR
 
