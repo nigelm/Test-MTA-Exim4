@@ -159,9 +159,6 @@ Returns the build number of C<exim> seen when the configuration was
 checked. This is intended for use within your own tests for appropriate
 versions/builds.
 
-    # ensure we are running exim 4.69 or later
-    ok(($exim->exim_version gt '4.69'), 'Exim version check');
-
 =cut
 
 sub exim_build {
@@ -226,7 +223,7 @@ sub has_capability {
               && $self->{_state}{config}{$type}{$what}
         ),
         $msg
-    );
+    )|| $self->_diag;
 }
 
 # ------------------------------------------------------------------------
@@ -258,14 +255,20 @@ sub has_not_capability {
               && !$self->{_state}{config}{$type}{$what}
         ),
         $msg
-    );
+    )|| $self->_diag;
 }
 
 # ------------------------------------------------------------------------
 
 =head2 routes_ok 
 
-TODO
+    $exim->routes_ok($address, $optional_msg);
+    $exim->routes_ok('address@example.com', 'Checking routing');
+
+Checks that C<exim> with this configuration can route to the address
+given. Accepts any working address which may route to any number of
+final targets as long as there are no undeliverable addresses in the
+set.
 
 =cut
 
@@ -283,15 +286,26 @@ sub routes_ok {
     $msg ||= sprintf( 'Can route to %s', $addr );
 
     # OK if there are no undeliverables and there are deliverables
-    $self->test->ok( ( $res->{deliverable} && !$res->{undeliverable} ), $msg );
+    $self->test->ok( ( $res->{deliverable} && !$res->{undeliverable} ), $msg )|| $self->_diag;
 }
 
 # ------------------------------------------------------------------------
 
 =head2 routes_as_ok 
 
-TODO
+    $exim->routes_as_ok($address, $target, $optional_msg);
+    $exim->routes_as_ok('address@example.com',
+        {transport => 'local_smtp}, 'Checking routing');
 
+Checks that C<exim> with this configuration routes to the address
+given with the appropriate target results.
+
+The target is an arrayref of hashes (or as a special case a single
+hash), which matches against the addresses section of the result from
+L<_run_exim_bt>. Each address matches if all the elements given in the
+target hash match (so an empty hash will match anything).
+
+See L<_run_exim_bt> for hash elements.
 
 =cut
 
@@ -301,7 +315,13 @@ sub routes_as_ok {
     my $target = shift;
     my $msg    = shift;
 
-    $self->_croak('Requires an address') unless ($addr);
+    $self->_croak('Requires an address')           unless ($addr);
+    $self->_croak('Requires a target description') unless ($target);
+
+    # if target is a hash, wrap it in an array
+    $target = [$target] if ( ref($target) eq 'HASH' );
+    $self->_croak('target should be an arrayref')
+      unless ( ref($target) eq 'ARRAY' );
 
     # run the check
     my $res = $self->_run_exim_bt($addr);
@@ -309,15 +329,51 @@ sub routes_as_ok {
     # pad the msg if not specified
     $msg ||= sprintf( 'Can route to %s', $addr );
 
-    # TODO
-    
+    # check we get the right number of things back
+    my $count_ok =
+      ( scalar( keys %{ $res->{addresses} } ) == scalar( @{$target} ) );
+    my $count         = scalar( @{$target} );
+    my $addr_count_ok = 0;
+    my $addresses     = { %{ $res->{addresses} } };    #copy address info
+
+    # only do these tests if the count matches the rules
+    if ($count_ok) {
+        foreach my $targetspec ( @{$target} ) {
+            $self->_croak('target spec should be hashref')
+              unless ( ref($targetspec) eq 'HASH' );
+            foreach my $addr ( keys %{$addresses} ) {
+                my $thisone = 1;
+                foreach my $key ( keys %{$targetspec} ) {
+                    unless ( exists( $addresses->{$addr}{$key} )
+                        && ( $addresses->{$addr}{$key} eq $targetspec->{$key} )
+                      )
+                    {
+                        $thisone = 0;
+                        last;
+                    }
+                }
+                if ($thisone) {
+                    $addr_count_ok++;
+                    last;
+                }
+            }
+        }
+    }
+
+    # return test status
+    $self->test->ok( ( $count_ok && ( $addr_count_ok == $count ) ), $msg )
+      || $self->_diag;
 }
 
 # ------------------------------------------------------------------------
 
 =head2 discards_ok 
 
-TODO
+    $exim->discards_ok($address, $optional_msg);
+    $exim->discards_ok('discards@example.com', 'Checking discarding');
+
+Checks that C<exim> with this configuration will discard the given
+address.
 
 =cut
 
@@ -341,14 +397,18 @@ sub discards_ok {
               && ( values %{ $res->{addresses} } )[0]->{discarded}
         ),
         $msg
-    );
+    )|| $self->_diag;
 }
 
 # ------------------------------------------------------------------------
 
 =head2 undeliverable_ok 
 
-TODO
+    $exim->undeliverable_ok($address, $optional_msg);
+    $exim->undeliverable_ok('discards@example.com', 'Checking discarding');
+
+Checks that C<exim> with this configuration will consider the given
+address to be undeliverable.
 
 =cut
 
@@ -366,7 +426,7 @@ sub undeliverable_ok {
     $msg ||= sprintf( 'Can route to %s', $addr );
 
     # OK if there are no deliverables and there are undeliverables
-    $self->test->ok( ( $res->{undeliverable} && !$res->{deliverable} ), $msg );
+    $self->test->ok( ( $res->{undeliverable} && !$res->{deliverable} ), $msg )|| $self->_diag;
 }
 
 # ------------------------------------------------------------------------
@@ -490,6 +550,49 @@ sub _run_exim_bv {
 Runs C<exim -bt> (address test mode) with the appropriate configuration
 file, to check how the single address passed routes. The output of the
 command is parsed and passed back in the results.
+
+The results structure is hash that looks like:-
+    {
+        all_ok        => # no invocation errors
+        deliverable   => # number of deliverable addresses
+        undeliverable => # number of undeliverable addresses
+        total         => # total number of addresses
+        addresses     => {}
+    }
+
+The C<addresses> part of the structure has one key for each resultant
+address, the value of which is another hash, which may contain the
+following items:-
+
+=over 4
+
+=item * ok
+
+True if the address routed OK, False otherwise.
+
+=item * discarded
+
+True if the address was discarded by the router, false or missing if
+not.
+
+=item * data
+
+Scalar of lines picked out of exim output related to this address and
+not otherwise recognised.
+
+=item * router
+
+The router name used to handle this address.
+
+=item * transport
+
+The transport name used to handle this address.
+
+=item * original
+
+The original address that was used within this transformation.
+
+=back
 
 =cut
 
