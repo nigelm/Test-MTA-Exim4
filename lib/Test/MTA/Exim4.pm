@@ -592,6 +592,10 @@ The transport name used to handle this address.
 
 The original address that was used within this transformation.
 
+=item * target
+
+For a local transport, the delivery target.
+
 =back
 
 =cut
