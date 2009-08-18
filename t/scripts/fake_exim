@@ -33,10 +33,32 @@ sub do_bv {
     exit(0);
 }
 
+sub do_bt;
+
 sub do_bt {
     my $config = shift;
     my $addr   = shift;
 
+    if ( $addr =~ /discard/ ) {
+        print "$addr is discarded\n";
+    }
+    elsif ( $addr =~ /undel/ ) {
+        print "$addr is undeliverable\n";
+    }
+    elsif ( $addr =~ /^multiple(\d+)\@(.*)/ ) {
+        foreach my $num ( 1 .. $1 ) {
+            do_bt( $config, sprintf( 'target%d@%s', $num, $2 ) );
+        }
+    }
+    elsif ( $addr =~ /(.*)\@local/ ) {
+        print "$addr -> $1\n";
+        print "  transport = local_delivery\n";
+    }
+    else {
+        print "$addr\n";
+        print "  router = smart_route, transport = remote_smtp\n";
+        print "  host 192.168.1.1 [192.168.1.1] \n";
+    }
 }
 
 # main
