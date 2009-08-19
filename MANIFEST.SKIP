@@ -40,3 +40,9 @@
 
 # Manifest stuff
 MANIFEST.bak
+
+# ignore any spare tar.gz files we left here...
+\b.*\.tar(\.gz|\.bz2)?
+
+# admin/release related stuff
+admin

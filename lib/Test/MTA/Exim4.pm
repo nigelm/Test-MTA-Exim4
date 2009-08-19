@@ -2,6 +2,7 @@ package Test::MTA::Exim4;
 
 use warnings;
 use strict;
+use 5.006;
 use base qw(Class::Accessor::Fast);
 use IPC::Cmd qw[can_run run];
 use Test::Builder;

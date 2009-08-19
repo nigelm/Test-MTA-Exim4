@@ -16,8 +16,11 @@ MANIFEST
 MANIFEST.SKIP
 META.yml
 README
+sample/exim-org.t
+sample/README.txt
 t/00-load.t
 t/01-exim-main-conf.t
+t/02-exim-route-config.t
 t/boilerplate.t
 t/pod-coverage.t
 t/pod.t
