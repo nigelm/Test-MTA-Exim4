@@ -223,7 +223,8 @@ sub has_capability {
               && $self->{_state}{config}{$type}{$what}
         ),
         $msg
-    )|| $self->_diag;
+      )
+      || $self->_diag;
 }
 
 # ------------------------------------------------------------------------
@@ -255,7 +256,8 @@ sub has_not_capability {
               && !$self->{_state}{config}{$type}{$what}
         ),
         $msg
-    )|| $self->_diag;
+      )
+      || $self->_diag;
 }
 
 # ------------------------------------------------------------------------
@@ -286,7 +288,8 @@ sub routes_ok {
     $msg ||= sprintf( 'Can route to %s', $addr );
 
     # OK if there are no undeliverables and there are deliverables
-    $self->test->ok( ( $res->{deliverable} && !$res->{undeliverable} ), $msg )|| $self->_diag;
+    $self->test->ok( ( $res->{deliverable} && !$res->{undeliverable} ), $msg )
+      || $self->_diag;
 }
 
 # ------------------------------------------------------------------------
@@ -388,7 +391,7 @@ sub discards_ok {
     my $res = $self->_run_exim_bt($addr);
 
     # pad the msg if not specified
-    $msg ||= sprintf( 'Can route to %s', $addr );
+    $msg ||= sprintf( 'Discard for %s', $addr );
 
     # OK if there is a total of one address and it was discarded
     $self->test->ok(
@@ -397,7 +400,7 @@ sub discards_ok {
               && ( values %{ $res->{addresses} } )[0]->{discarded}
         ),
         $msg
-    )|| $self->_diag;
+    ) || $self->_diag;
 }
 
 # ------------------------------------------------------------------------
@@ -423,10 +426,11 @@ sub undeliverable_ok {
     my $res = $self->_run_exim_bt($addr);
 
     # pad the msg if not specified
-    $msg ||= sprintf( 'Can route to %s', $addr );
+    $msg ||= sprintf( 'Undeliverable to %s', $addr );
 
     # OK if there are no deliverables and there are undeliverables
-    $self->test->ok( ( $res->{undeliverable} && !$res->{deliverable} ), $msg )|| $self->_diag;
+    $self->test->ok( ( $res->{undeliverable} && !$res->{deliverable} ), $msg )
+      || $self->_diag;
 }
 
 # ------------------------------------------------------------------------
@@ -588,9 +592,15 @@ The router name used to handle this address.
 
 The transport name used to handle this address.
 
+=item * address
+
+The final destination addresss.
+
 =item * original
 
-The original address that was used within this transformation.
+The original address that was used within this transformation. This is
+actually an arrayref each containing an address as several
+transformations may take place.
 
 =item * target
 
@@ -638,24 +648,27 @@ sub _run_exim_bt {
         #   <addr> is discarded
         #   <addr> -> <target> + more info on next lines
         #   <addr> + more info on next lines
-        if ( $line =~ /^(.*) is undeliverable$/ ) {
+        if ( $line =~ /^(.*) is undeliverable(.*)$/ ) {
             $result->{undeliverable}++;
             $result->{total}++;
-            $result->{addresses}{$1} = { ok => 0 };
+            $result->{addresses}{$1} = { ok => 0, reason => $2, address => $1 };
             next;
         }
         $result->{deliverable}++;
         $result->{total}++;
         my $res = { ok => 1, discarded => 0, data => [] };
         if ( $line =~ /^(.*) -\> (.*)$/ ) {
-            $res->{target} = $2;
+            $res->{address}          = $1;
+            $res->{target}           = $2;
             $result->{addresses}{$1} = $res;
         }
         elsif ( $line =~ /^(.*) is discarded$/ ) {
-            $res->{discarded} = 1;
+            $res->{address}          = $1;
+            $res->{discarded}        = 1;
             $result->{addresses}{$1} = $res;
         }
         else {
+            $res->{address} = $line;
             $result->{addresses}{$line} = $res;
         }
 
@@ -663,7 +676,8 @@ sub _run_exim_bt {
         while ( scalar(@lines) && ( $lines[0] =~ /^\s/ ) ) {
             $line = shift @lines;
             if ( $line =~ /^\s+\<-- (.*)/ ) {
-                $res->{original} = $1;
+                $res->{original} ||= [];
+                push( @{ $res->{original} }, $1 );
             }
             elsif ( $line =~ /^\s+transport = (.*)/ ) {
                 $res->{transport} = $1;
