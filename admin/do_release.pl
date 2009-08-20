@@ -250,6 +250,7 @@ the automated_testing feature.
 =cut
 
 use Getopt::Std;
+use Pod::Readme;
 use Module::Release '2.00_04';
 
 my $class = "Module::Release";
@@ -422,6 +423,14 @@ else
 	$release->_print( "Skipping kwalitee checks. Shame on you!\n" );
 	}
 
+# make sure README file is right
+if (-M 'lib/Test/MTA/Exim4.pm' < -M 'README'){
+  $release->_print( "Updating README file\n" );
+  my $parser = Pod::Readme->new();
+  $parser->parse_from_file('lib/Test/MTA/Exim4.pm', 'README');
+} else {
+  $release->_print( "README file up to date\n" );
+}
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # check source repository (but do not commit)
 $release->_print("============Checking source repository\n");

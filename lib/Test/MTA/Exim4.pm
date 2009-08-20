@@ -35,6 +35,22 @@ or rejects mail as you would expect. As such it is an ideal system for
 creating a test suite for your mail configuration allowing you to check
 that there are no unexpected regressions when you make a change.
 
+You need to be aware that an C<exim> installation depends on more than
+just a config file - the exim binary, and the installation environment
+may effect the behaviour and/or routing of messages. You really need to
+do final configuration tests on the box that the system will be running
+on in production.
+
+=head1 WARNING
+
+At present this module is experimental - both the API and
+implementation are subject to change. To this end I welcome discussion
+on how best to implement or expose functionality. There is other work
+proposed to produce similar test modules for other MTAs and so a common
+mechanism or compatibility layer between them is possible - this module
+has been produced to get something out as code is a better discussion
+point than vapourware ideas!
+
 =head1 METHODS
 
 =cut
@@ -733,9 +749,11 @@ Nigel Metheringham, C<< <nigelm at cpan.org> >>
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<bug-test-mta-exim4 at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-MTA-Exim4>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
+Please report any bugs or feature requests to C<bug-test-mta-exim4 at
+rt.cpan.org>, or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-MTA-Exim4>. I
+will be notified, and then you'll automatically be notified of progress
+on your bug as I make changes.
 
 
 =head1 SUPPORT
@@ -761,7 +779,7 @@ You can also look for information at:
 
 =item * github - source control system (latest development version will always be here)
 
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Test-MTA-Exim4>
+L<http://github.com/nigelm/Test-MTA-Exim4/>
 
 =item * RT: CPAN's request tracker
 

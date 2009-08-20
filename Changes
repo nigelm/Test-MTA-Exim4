@@ -1,5 +1,7 @@
 Revision history for Test-MTA-Exim4
 
-0.01    Date/time
-        First version, released on an unsuspecting world.
+0.01    Thu 20 Aug 2009
+        Initial version.
+        Handles config and routing tests only.  
+        Everything subject to change
 

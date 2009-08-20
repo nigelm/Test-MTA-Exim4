@@ -13,6 +13,14 @@ requires 'Class::Accessor::Fast' => 0;
 requires 'IPC::Cmd'              => 0;
 requires 'Test::Builder'         => 0;
 
+tests_recursive (qw|
+    t
+|);
+
+resources 'license'     => 'http://dev.perl.org/licenses/';
+resources 'repository'  => 'http://github.com/nigelm/Test-MTA-Exim4/';
+resources 'MailingList' => 'http://lists.exim.org/mailman/listinfo/exim-dev';
+
 auto_install;
 
 WriteAll;
