@@ -46,3 +46,6 @@ MANIFEST.bak
 
 # admin/release related stuff
 admin
+^\.releaserc
+# Module::Release creates the output in the current directory!!!
+^Test-MTA-Exim4-\d
