@@ -431,6 +431,10 @@ if (-M 'lib/Test/MTA/Exim4.pm' < -M 'README'){
 } else {
   $release->_print( "README file up to date\n" );
 }
+
+# make sure MANIFEST is right
+$release->check_manifest;
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # check source repository (but do not commit)
 $release->_print("============Checking source repository\n");
