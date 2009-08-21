@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 eval 'exec /usr/bin/perl  -S $0 ${1+"$@"}'
-    if 0; # not running under some shell
+  if 0;    # not running under some shell
 use strict;
 use warnings;
 
@@ -251,30 +251,57 @@ the automated_testing feature.
 
 use Getopt::Std;
 use Pod::Readme;
-use Module::Release '2.00_04';
+use Module::Release;
+use IO::File;
+use POSIX qw(strftime);
 
 my $class = "Module::Release";
 
+sub check_changes {
+    my $release = shift;
+
+    $release->_print("Checking Changes file\n");
+    my $fh = IO::File->new( 'Changes', 'r' ) || die "Cannot find Changes file";
+    my $version_line;
+    while (<$fh>) {
+        chomp;
+        if (/^\d/) {
+
+            # this must be a version tag
+            $version_line = $_;
+            last;
+        }
+    }
+    my ( $version, $date ) = split( /\s+/, $version_line, 2 );
+
+    # check version
+    unless ( $version eq $release->dist_version ) {
+        die "Version number in Changes file does not match release version";
+    }
+
+    # check date
+    my $thisdate_re =
+      strftime( '%a \s+ %e \s+ %b \s+ %Y', localtime( time() ) );
+    unless ( $date =~ /$thisdate_re/x ) {
+        die "Date for this version in Changes file is not today";
+    }
+}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 my %opts;
-getopts('ahdptvk', \%opts) or $opts{h} = 1;
-
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-my( $script_version ) = '2.00_04';
-
-if( $opts{v} )
-	{
-	print "$0 version $script_version\n";
-	exit;
-	}
-
+getopts( 'ahdptvk', \%opts ) or $opts{h} = 1;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-if( $opts{h} )
-	{
-	print <<"USE";
+my ($script_version) = '2.00_04';
+
+if ( $opts{v} ) {
+    print "$0 version $script_version\n";
+    exit;
+}
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+if ( $opts{h} ) {
+    print <<"USE";
 
 Use: release -hdktv [ LOCAL_FILE [ REMOTE_FILE ] ]
 
@@ -294,146 +321,142 @@ or releaserc file and the environment for its preferences.  See
 
 USE
 
-	exit;
-	}
+    exit;
+}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # get the release object
 my %params;
-$params{local}  = shift @ARGV if @ARGV;
+$params{local} = shift @ARGV if @ARGV;
 
-if( @ARGV )
-	{
+if (@ARGV) {
     $params{remote} = shift @ARGV;
-	}
-elsif( $params{local} )
-	{
+}
+elsif ( $params{local} ) {
     $params{remote} = $params{local};
-	}
+}
 
 $params{debug} = 1 if $opts{d};
 
-my $release = $class->new( %params );
+my $release = $class->new(%params);
 
-$release->_debug( "release $script_version, using $class "
-	.  $class->VERSION . "\n" );
-
+$release->_debug(
+    "release $script_version, using $class " . $class->VERSION . "\n" );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # load whatever will handle source control
 {
-my @vcs = (
-	[ '.git'       => "Module::Release::Git" ],
-	[ '.gitignore' => "Module::Release::Git" ],
-	[ '.svn'       => "Module::Release::SVN" ],
-	[ 'CVS'        => "Module::Release::CVS" ],
-	);
+    my @vcs = (
+        [ '.git'       => "Module::Release::Git" ],
+        [ '.gitignore' => "Module::Release::Git" ],
+        [ '.svn'       => "Module::Release::SVN" ],
+        [ 'CVS'        => "Module::Release::CVS" ],
+    );
 
-foreach my $vcs ( @vcs )
-	{
-	next unless -e $vcs->[0];
+    foreach my $vcs (@vcs) {
+        next unless -e $vcs->[0];
 
-	my $module = $vcs->[1];
+        my $module = $vcs->[1];
 
-	$release->_debug( "I see an $vcs->[0] directory, so I'm loading $module\n" );
+        $release->_debug(
+            "I see an $vcs->[0] directory, so I'm loading $module\n");
 
-	$release->load_mixin( $module );
+        $release->load_mixin($module);
 
-	die "Could not load $module: $@\n" if $@;
+        die "Could not load $module: $@\n" if $@;
 
-	last;
-	}
+        last;
+    }
 
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Will we upload to PAUSE?
-if( $release->config->cpan_user ) # not a dry run
-	{
-	$release->load_mixin( 'Module::Release::PAUSE' );
-	}
-
+if ( $release->config->cpan_user )    # not a dry run
+{
+    $release->load_mixin('Module::Release::PAUSE');
+}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Will we upload to PAUSE?
-$release->load_mixin( 'Module::Release::Prereq' );
+$release->load_mixin('Module::Release::Prereq');
 
 my $skip_prereqs = $opts{p} || $release->config->skip_prereqs;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Set automated testing from command line, config, environment, or default 
+# Set automated testing from command line, config, environment, or default
 {
-no warnings 'uninitialized';
+    no warnings 'uninitialized';
 
-$ENV{AUTOMATED_TESTING} = ( 
-	grep { defined } ( 
-		$opts{a}, $release->config->automated_testing, 
-		$ENV{AUTOMATED_TESTING}, 0 ) 
-	)[0];
-$release->_debug( "Automated testing is $ENV{AUTOMATED_TESTING}; -a was $opts{a};" .
-	" automated_testing was " . $release->config->automated_testing . ";\n" );
-}	
-	
+    $ENV{AUTOMATED_TESTING} = (
+        grep { defined } (
+            $opts{a},                $release->config->automated_testing,
+            $ENV{AUTOMATED_TESTING}, 0
+        )
+    )[0];
+    $release->_debug(
+            "Automated testing is $ENV{AUTOMATED_TESTING}; -a was $opts{a};"
+          . " automated_testing was "
+          . $release->config->automated_testing
+          . ";\n" );
+}
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # test with a bunch of perls
 {
-my $old_perl = $release->get_perl;
+    my $old_perl = $release->get_perl;
 
-foreach my $perl ( $release->perls )
-	{
-	$release->_print("============Testing with $perl\n");
-	$release->set_perl( $perl ) or next;
+    foreach my $perl ( $release->perls ) {
+        $release->_print("============Testing with $perl\n");
+        $release->set_perl($perl) or next;
 
-	$release->clean;
-	$release->build_makefile;
-	$release->make;
-	$release->test;
+        $release->clean;
+        $release->build_makefile;
+        $release->make;
+        $release->test;
 
-	unless( $skip_prereqs )
-		{
-		$release->check_prereqs;
-		}
-	else
-		{
-		$release->_print( "Skipping prereq checks. Shame on you!\n" );
-		}
-		
-	$release->dist;
-	$release->disttest;
-	}
+        unless ($skip_prereqs) {
+            $release->check_prereqs;
+        }
+        else {
+            $release->_print("Skipping prereq checks. Shame on you!\n");
+        }
 
-$release->set_perl( $old_perl );
+        $release->dist;
+        $release->disttest;
+    }
+
+    $release->set_perl($old_perl);
 }
-
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # check kwalitee
-unless( $opts{k} || $release->config->skip_kwalitee  )
-	{
-	$release->load_mixin( 'Module::Release::Kwalitee' );
-	$release->_print("============Testing for kwalitee\n");
-	$release->clean;
-	$release->build_makefile;
-	$release->make;
-	$release->dist;
-	$release->check_kwalitee;
-	}
-else
-	{
-	$release->_print( "Skipping kwalitee checks. Shame on you!\n" );
-	}
+unless ( $opts{k} || $release->config->skip_kwalitee ) {
+    $release->load_mixin('Module::Release::Kwalitee');
+    $release->_print("============Testing for kwalitee\n");
+    $release->clean;
+    $release->build_makefile;
+    $release->make;
+    $release->dist;
+    $release->check_kwalitee;
+}
+else {
+    $release->_print("Skipping kwalitee checks. Shame on you!\n");
+}
 
 # make sure README file is right
-if (-M 'lib/Test/MTA/Exim4.pm' < -M 'README'){
-  $release->_print( "Updating README file\n" );
-  my $parser = Pod::Readme->new();
-  $parser->parse_from_file('lib/Test/MTA/Exim4.pm', 'README');
-} else {
-  $release->_print( "README file up to date\n" );
+if ( -M 'lib/Test/MTA/Exim4.pm' < -M 'README' ) {
+    $release->_print("Updating README file\n");
+    my $parser = Pod::Readme->new();
+    $parser->parse_from_file( 'lib/Test/MTA/Exim4.pm', 'README' );
+}
+else {
+    $release->_print("README file up to date\n");
 }
 
 # make sure MANIFEST is right
 $release->check_manifest;
+check_changes($release);
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # check source repository (but do not commit)
@@ -443,76 +466,17 @@ $release->check_vcs;
 
 my $Version = $release->dist_version;
 
-$release->_debug( "dist version is  $Version\n" );
-
+$release->_debug("dist version is  $Version\n");
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # exit if this is a dry run. Everything following this changes
 # things or uploads. Don't leave anything behind.
 
-if( $opts{t} )
-	{
-	$release->distclean;
-	unlink glob( "*.tar*" );
-	exit;
-	}
-
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-unless( $release->debug )
-	{
-	my $changes = "Changes";
-	my $bak     = $changes . ".bak";
-
-	die "Changes file does not exist!\n" unless -e $changes;
-
-	$release->_print( "\n", "-" x 73, "\n", "Enter Changes section\n\n> " );
-
-	my $str = $Version . " - " . localtime() . "\n";
-
-	while( <STDIN> )
-		{
-		$_ =~ s/^(\S)/\t$1/; # always indent
-
-		$str .= $_;
-		$release->_print( "> " );
-		}
-
-	$str .= "\n";
-
-	rename $changes, $bak or die "Could not backup $changes. $!\n";
-
-	open my $in, $bak or die "Could not read old $changes file! $!\n";
-	open my $out, ">", $changes;
-
-	while( <$in> )
-		{
-		print $out $_;
-		last unless m/\S/;
-		}
-
-	print $out $str;
-
-	print $out $_ while( <$in> );
-
-	close $in;
-	close $out;
-
-	my $command = do {
-		if(    -d 'CVS' )  { 'cvs commit -m' }
-		elsif( -d '.svn' ) { 'svn commit -m' }
-		elsif( -d '.git' ) { 'git commit -a -m' }
-		};
-
-	my $cvs_commit = `$command "* for version $Version" 2>&1`;
-
-	$release->_print( $cvs_commit );
-	}
-else
-	{
-	$release->_print( "Skipping Changes file since you're debugging" );
-	}
-
+if ( $opts{t} ) {
+    $release->distclean;
+    unlink glob("*.tar*");
+    exit;
+}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Build the release in preparation for uploading
@@ -524,25 +488,23 @@ $release->dist;
 
 $release->check_for_passwords;
 
-$release->_debug( "This is where I should release stuff\n" );
-while( $release->should_upload_to_pause )
-	{
-	$release->load_mixin( 'Module::Release::FTP' );
-	$release->_print("Now uploading to PAUSE\n" );
-	$release->_print("============Uploading to PAUSE\n");
-	last if $release->debug;
-	
-	$release->ftp_upload( hostname => $release->pause_ftp_site );
-	$release->pause_claim;
-	last;
-	}
+$release->_debug("This is where I should release stuff\n");
+while ( $release->should_upload_to_pause ) {
+    $release->load_mixin('Module::Release::FTP');
+    $release->_print("Now uploading to PAUSE\n");
+    $release->_print("============Uploading to PAUSE\n");
+    last if $release->debug;
+
+    $release->ftp_upload( hostname => $release->pause_ftp_site );
+    $release->pause_claim;
+    last;
+}
 
 $release->vcs_tag unless $release->debug;
-
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 $release->clean;
 
-$release->_print( "Done.\n" );
+$release->_print("Done.\n");
 
 __END__
