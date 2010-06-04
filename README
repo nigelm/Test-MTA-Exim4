@@ -3,7 +3,7 @@ NAME
     configurations
 
 VERSION
-    Version 0.02
+    Version 0.03
 
 SYNOPSIS
     Test::MTA::Exim4 allows the testing of an `exim' installation and

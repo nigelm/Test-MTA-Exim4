@@ -1,5 +1,8 @@
 Revision history for Test-MTA-Exim4
 
+0.03    Fri  4 Jun 2010
+        Update due to botched git merge...
+
 0.02    Fri  4 Jun 2010
         Suppressed automated testing for Win32 (won't work on Win)
 

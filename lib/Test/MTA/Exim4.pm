@@ -16,12 +16,12 @@ Test::MTA::Exim4 - Test Anything interface for testing Exim4 configurations
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
 use vars qw[$VERSION];
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 SYNOPSIS
 
