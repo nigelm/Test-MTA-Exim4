@@ -1,5 +1,7 @@
 Revision history for Test-MTA-Exim4
 
+0.02    Fri  4 Jun 2010
+        Suppressed automated testing for Win32 (won't work on Win)
 
 0.01    Thu 20 Aug 2009
         Initial version.

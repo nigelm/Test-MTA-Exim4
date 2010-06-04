@@ -16,12 +16,12 @@ Test::MTA::Exim4 - Test Anything interface for testing Exim4 configurations
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
 use vars qw[$VERSION];
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -811,7 +811,7 @@ use by similar modules for other MTAs.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2009 Nigel Metheringham.
+Copyright 2009-2010 Nigel Metheringham.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published
