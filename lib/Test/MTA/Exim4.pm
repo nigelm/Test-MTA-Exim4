@@ -10,18 +10,7 @@ use Test::Builder;
 __PACKAGE__->mk_accessors(qw[ debug]);
 __PACKAGE__->mk_ro_accessors(qw[exim_path config_file test timeout]);
 
-=head1 NAME
-
-Test::MTA::Exim4 - Test Anything interface for testing Exim4 configurations
-
-=head1 VERSION
-
-Version 0.03
-
-=cut
-
-use vars qw[$VERSION];
-our $VERSION = '0.03';
+# ABSTRACT: Test Anything interface for testing Exim4 configurations
 
 =head1 SYNOPSIS
 
@@ -743,63 +732,6 @@ sub _diag {
 
 # ------------------------------------------------------------------------
 
-=head1 AUTHOR
-
-Nigel Metheringham, C<< <nigelm at cpan.org> >>
-
-=head1 BUGS
-
-Please report any bugs or feature requests to C<bug-test-mta-exim4 at
-rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-MTA-Exim4>. I
-will be notified, and then you'll automatically be notified of progress
-on your bug as I make changes.
-
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc Test::MTA::Exim4
-
-=head2 Warning
-
-=over 4
-
-At this point the module is *not* released to CPAN - still in early
-development and subject to change in a big way (including renaming, or
-even just dropping it). However when/if it is released, further
-information will be found at these locations
-
-=back
-
-You can also look for information at:
-
-=over 4
-
-=item * github - source control system (latest development version will always be here)
-
-L<http://github.com/nigelm/Test-MTA-Exim4/>
-
-=item * RT: CPAN's request tracker
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Test-MTA-Exim4>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/Test-MTA-Exim4>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/Test-MTA-Exim4>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/Test-MTA-Exim4/>
-
-=back
-
-
 =head1 ACKNOWLEDGEMENTS
 
 The module draws very strongly on the L<Test::Exim4::Routing> module by
@@ -807,18 +739,6 @@ Max Maischein. It is structured differently, and is currently very
 experimental (meaning the API may change in a big way), so these
 changes were made as a new module in a name space that is intended for
 use by similar modules for other MTAs.
-
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright 2009-2010 Nigel Metheringham.
-
-This program is free software; you can redistribute it and/or modify it
-under the terms of either: the GNU General Public License as published
-by the Free Software Foundation; or the Artistic License.
-
-See http://dev.perl.org/licenses/ for more information.
-
 
 =cut
 
