@@ -2,9 +2,7 @@
 #
 # Series of tests for the exim config file used on the exim.org machine
 #
-use FindBin qw($Bin);
 use Test::More 'no_plan';
-use Data::Dumper;
 
 BEGIN {
     use_ok('Test::MTA::Exim4');
@@ -19,7 +17,7 @@ ok( $exim, 'Created exim test object' );
 $exim->config_ok;
 
 # check the version numbers
-ok( ( $exim->exim_version eq '4.69' ), 'Check version number' );
+ok( ( $exim->exim_version ge '4.69' ), 'Check version number' );
 
 # build number - no idea why you want this!
 ok( ( $exim->exim_build == 1 ), 'Check build number' );
@@ -86,9 +84,9 @@ $exim->undeliverable_ok('bug99999999@exim.org');
 #
 # Checks all the list addresses currently known...
 foreach my $list (
-    qw[exim-announce  exim-future       exim-users     mailman   site-maintainers
-    exim-cvs       exim-maintainers  exim-users-de  pcre-dev
-    exim-dev       exim-mirrors      foundation     pcre-svn]
+    qw[exim-announce    exim-users          mailman         site-maintainers
+       exim-cvs         exim-maintainers    exim-users-de   pcre-dev
+       exim-dev         exim-mirrors        pcre-svn]
   )
 {
     foreach my $suffix ( '',
