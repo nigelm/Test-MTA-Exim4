@@ -1,4 +1,10 @@
 package Test::MTA::Exim4;
+BEGIN {
+  $Test::MTA::Exim4::VERSION = '0.04';
+}
+BEGIN {
+  $Test::MTA::Exim4::AUTHORITY = 'cpan:NIGELM';
+}
 
 use warnings;
 use strict;
@@ -12,60 +18,9 @@ __PACKAGE__->mk_ro_accessors(qw[exim_path config_file test timeout]);
 
 # ABSTRACT: Test Anything interface for testing Exim4 configurations
 
-=begin :prelude
-
-=for test_synopsis
-1;
-__END__
-
-=for stopwords acknowledgements mtas Maischein checkable exim exim4 recognised subitem subitems vapourware
-
-=end :prelude
-
-=head1 SYNOPSIS
-
-L<Test::MTA::Exim4> allows the testing of an C<exim> installation
-and configuration using the perl TAP (Test Anything Protocol)
-methodology.
-
-This allows the writing of some simple test scripts which can check for
-features of C<exim> and check that this configuration routes, accepts
-or rejects mail as you would expect. As such it is an ideal system for
-creating a test suite for your mail configuration allowing you to check
-that there are no unexpected regressions when you make a change.
-
-You need to be aware that an C<exim> installation depends on more than
-just a config file - the exim binary, and the installation environment
-may effect the behaviour and/or routing of messages. You really need to
-do final configuration tests on the box that the system will be running
-on in production.
-
-=head1 WARNING
-
-At present this module is experimental - both the API and
-implementation are subject to change. To this end I welcome discussion
-on how best to implement or expose functionality. There is other work
-proposed to produce similar test modules for other MTAs and so a common
-mechanism or compatibility layer between them is possible - this module
-has been produced to get something out as code is a better discussion
-point than vapourware ideas!
-
-=head1 METHODS
-
-=cut
 
 # ------------------------------------------------------------------------
 
-=head2 new
-
-    my $exim = Test::MTA::Exim4->new( \%fields );
-
-Create a new exim configuration testing object. You may pass
-configuration information in as a hash reference - this is the only
-point at which the locations of the exim binary and configuration file
-may be set.
-
-=cut
 
 sub new {
     my ( $proto, $fields ) = @_;
@@ -102,11 +57,6 @@ sub new {
 
 # ------------------------------------------------------------------------
 
-=head2 reset
-
-Resets the internal state.  Not sure when this might be useful!
-
-=cut
 
 sub reset {
     my $self = shift;
@@ -118,13 +68,6 @@ sub reset {
 
 # ------------------------------------------------------------------------
 
-=head2 config_ok
-
-Checks that C<exim> considers the configuration file as syntactically
-valid. The config file must be specified when C<new> is called,
-otherwise the default is used.
-
-=cut
 
 sub config_ok {
     my $self = shift;
@@ -147,16 +90,6 @@ sub config_ok {
 
 # ------------------------------------------------------------------------
 
-=head2 exim_version
-
-Returns the version of C<exim> seen when the configuration was checked.
-This is intended for use within your own tests for appropriate
-versions, for example:-
-
-    # ensure we are running exim 4.69 or later
-    ok(($exim->exim_version gt '4.69'), 'Exim version check');
-
-=cut
 
 sub exim_version {
     my $self = shift;
@@ -168,13 +101,6 @@ sub exim_version {
 
 # ------------------------------------------------------------------------
 
-=head2 exim_build
-
-Returns the build number of C<exim> seen when the configuration was
-checked. This is intended for use within your own tests for appropriate
-versions/builds.
-
-=cut
 
 sub exim_build {
     my $self = shift;
@@ -186,40 +112,6 @@ sub exim_build {
 
 # ------------------------------------------------------------------------
 
-=head2 has_capability
-
-    $exim->has_capability($type, $what, $optional_msg)
-    $exim->has_capability('lookup', 'lsearch', 'Has lsearch capability')
-
-Checks that C<exim> has the appropriate capability.  This is taken from
-the lists of capabilities listed by C<exim -bV>
-
-The types of capability are:-
-
-=over 4
-
-=item * support_for
-
-=item * lookup
-
-=item * authenticator
-
-=item * router
-
-=item * transport
-
-=back
-
-The items within a capability are processed to be lowercase
-alphanumeric only - so C<iconv> rather than C<iconv()> as output by
-exim. The subitems (for example C<maildir> is a subitem of
-C<appendfile>) are treated as separately checkable items.
-
-If the version of C<exim> being used has both built-in and dynamic
-lookups (or potentially in later versions multiple types of other
-capabilities), then these are merged into a single capability list.
-
-=cut
 
 sub has_capability {
     my $self = shift;
@@ -247,12 +139,6 @@ sub has_capability {
 
 # ------------------------------------------------------------------------
 
-=head2 has_not_capability
-
-Precisely the opposite of L<has_capability> with an opposite test - so
-fails if this does exist.
-
-=cut
 
 sub has_not_capability {
     my $self = shift;
@@ -280,17 +166,6 @@ sub has_not_capability {
 
 # ------------------------------------------------------------------------
 
-=head2 routes_ok
-
-    $exim->routes_ok($address, $optional_msg);
-    $exim->routes_ok('address@example.com', 'Checking routing');
-
-Checks that C<exim> with this configuration can route to the address
-given. Accepts any working address which may route to any number of
-final targets as long as there are no undeliverable addresses in the
-set.
-
-=cut
 
 sub routes_ok {
     my $self = shift;
@@ -312,23 +187,6 @@ sub routes_ok {
 
 # ------------------------------------------------------------------------
 
-=head2 routes_as_ok
-
-    $exim->routes_as_ok($address, $target, $optional_msg);
-    $exim->routes_as_ok('address@example.com',
-        {transport => 'local_smtp}, 'Checking routing');
-
-Checks that C<exim> with this configuration routes to the address
-given with the appropriate target results.
-
-The target is an arrayref of hashes (or as a special case a single
-hash), which matches against the addresses section of the result from
-L<_run_exim_bt>. Each address matches if all the elements given in the
-target hash match (so an empty hash will match anything).
-
-See L<_run_exim_bt> for hash elements.
-
-=cut
 
 sub routes_as_ok {
     my $self   = shift;
@@ -388,15 +246,6 @@ sub routes_as_ok {
 
 # ------------------------------------------------------------------------
 
-=head2 discards_ok
-
-    $exim->discards_ok($address, $optional_msg);
-    $exim->discards_ok('discards@example.com', 'Checking discarding');
-
-Checks that C<exim> with this configuration will discard the given
-address.
-
-=cut
 
 sub discards_ok {
     my $self = shift;
@@ -423,15 +272,6 @@ sub discards_ok {
 
 # ------------------------------------------------------------------------
 
-=head2 undeliverable_ok
-
-    $exim->undeliverable_ok($address, $optional_msg);
-    $exim->undeliverable_ok('discards@example.com', 'Checking discarding');
-
-Checks that C<exim> with this configuration will consider the given
-address to be undeliverable.
-
-=cut
 
 sub undeliverable_ok {
     my $self = shift;
@@ -453,19 +293,9 @@ sub undeliverable_ok {
 
 # ------------------------------------------------------------------------
 
-=head1 INTERNAL METHODS
-
-These methods are not intended to be run by end users, but are exposed.
-
-=cut
 
 # ------------------------------------------------------------------------
 
-=head2 _run_exim_command
-
-Runs an exim instance with the appropriate config file and
-
-=cut
 
 sub _run_exim_command {
     my $self = shift;
@@ -500,14 +330,6 @@ sub _run_exim_command {
 
 # ------------------------------------------------------------------------
 
-=head2 _run_exim_bv
-
-Runs C<exim -bV> with the appropriate configuration file, to check that
-the configuration file is valid. The output of the command is parsed
-and stashed and used to provide the functions to check versions numbers
-and capabilities.
-
-=cut
 
 sub _run_exim_bv {
     my $self = shift;
@@ -568,66 +390,6 @@ sub _run_exim_bv {
 
 # ------------------------------------------------------------------------
 
-=head2 _run_exim_bt
-
-Runs C<exim -bt> (address test mode) with the appropriate configuration
-file, to check how the single address passed routes. The output of the
-command is parsed and passed back in the results.
-
-The results structure is hash that looks like:-
-    {
-        all_ok        => # no invocation errors
-        deliverable   => # number of deliverable addresses
-        undeliverable => # number of undeliverable addresses
-        total         => # total number of addresses
-        addresses     => {}
-    }
-
-The C<addresses> part of the structure has one key for each resultant
-address, the value of which is another hash, which may contain the
-following items:-
-
-=over 4
-
-=item * ok
-
-True if the address routed OK, False otherwise.
-
-=item * discarded
-
-True if the address was discarded by the router, false or missing if
-not.
-
-=item * data
-
-Scalar of lines picked out of exim output related to this address and
-not otherwise recognised.
-
-=item * router
-
-The router name used to handle this address.
-
-=item * transport
-
-The transport name used to handle this address.
-
-=item * address
-
-The final destination address.
-
-=item * original
-
-The original address that was used within this transformation. This is
-actually an arrayref each containing an address as several
-transformations may take place.
-
-=item * target
-
-For a local transport, the delivery target.
-
-=back
-
-=cut
 
 sub _run_exim_bt {
     my $self    = shift;
@@ -716,13 +478,6 @@ sub _run_exim_bt {
 
 # ------------------------------------------------------------------------
 
-=head2 _diag
-
-Spits out some L<Test::Builder> diagnostics for the last run command.
-Used internally by some tests on failure. The output data is the last
-error seen by L<IPC::Cmd> and the complete output of the command.
-
-=cut
 
 sub _diag {
     my $self = shift;
@@ -745,6 +500,249 @@ sub _diag {
 
 # ------------------------------------------------------------------------
 
+
+1;    # End of Test::MTA::Exim4
+
+__END__
+=pod
+
+=for test_synopsis 1;
+__END__
+
+=for stopwords acknowledgements mtas Maischein checkable exim exim4 recognised subitem subitems vapourware
+
+=head1 NAME
+
+Test::MTA::Exim4 - Test Anything interface for testing Exim4 configurations
+
+=head1 VERSION
+
+version 0.04
+
+=head1 SYNOPSIS
+
+L<Test::MTA::Exim4> allows the testing of an C<exim> installation
+and configuration using the perl TAP (Test Anything Protocol)
+methodology.
+
+This allows the writing of some simple test scripts which can check for
+features of C<exim> and check that this configuration routes, accepts
+or rejects mail as you would expect. As such it is an ideal system for
+creating a test suite for your mail configuration allowing you to check
+that there are no unexpected regressions when you make a change.
+
+You need to be aware that an C<exim> installation depends on more than
+just a config file - the exim binary, and the installation environment
+may effect the behaviour and/or routing of messages. You really need to
+do final configuration tests on the box that the system will be running
+on in production.
+
+=head1 WARNING
+
+At present this module is experimental - both the API and
+implementation are subject to change. To this end I welcome discussion
+on how best to implement or expose functionality. There is other work
+proposed to produce similar test modules for other MTAs and so a common
+mechanism or compatibility layer between them is possible - this module
+has been produced to get something out as code is a better discussion
+point than vapourware ideas!
+
+=head1 METHODS
+
+=head2 new
+
+    my $exim = Test::MTA::Exim4->new( \%fields );
+
+Create a new exim configuration testing object. You may pass
+configuration information in as a hash reference - this is the only
+point at which the locations of the exim binary and configuration file
+may be set.
+
+=head2 reset
+
+Resets the internal state.  Not sure when this might be useful!
+
+=head2 config_ok
+
+Checks that C<exim> considers the configuration file as syntactically
+valid. The config file must be specified when C<new> is called,
+otherwise the default is used.
+
+=head2 exim_version
+
+Returns the version of C<exim> seen when the configuration was checked.
+This is intended for use within your own tests for appropriate
+versions, for example:-
+
+    # ensure we are running exim 4.69 or later
+    ok(($exim->exim_version gt '4.69'), 'Exim version check');
+
+=head2 exim_build
+
+Returns the build number of C<exim> seen when the configuration was
+checked. This is intended for use within your own tests for appropriate
+versions/builds.
+
+=head2 has_capability
+
+    $exim->has_capability($type, $what, $optional_msg)
+    $exim->has_capability('lookup', 'lsearch', 'Has lsearch capability')
+
+Checks that C<exim> has the appropriate capability.  This is taken from
+the lists of capabilities listed by C<exim -bV>
+
+The types of capability are:-
+
+=over 4
+
+=item * support_for
+
+=item * lookup
+
+=item * authenticator
+
+=item * router
+
+=item * transport
+
+=back
+
+The items within a capability are processed to be lowercase
+alphanumeric only - so C<iconv> rather than C<iconv()> as output by
+exim. The subitems (for example C<maildir> is a subitem of
+C<appendfile>) are treated as separately checkable items.
+
+If the version of C<exim> being used has both built-in and dynamic
+lookups (or potentially in later versions multiple types of other
+capabilities), then these are merged into a single capability list.
+
+=head2 has_not_capability
+
+Precisely the opposite of L<has_capability> with an opposite test - so
+fails if this does exist.
+
+=head2 routes_ok
+
+    $exim->routes_ok($address, $optional_msg);
+    $exim->routes_ok('address@example.com', 'Checking routing');
+
+Checks that C<exim> with this configuration can route to the address
+given. Accepts any working address which may route to any number of
+final targets as long as there are no undeliverable addresses in the
+set.
+
+=head2 routes_as_ok
+
+    $exim->routes_as_ok($address, $target, $optional_msg);
+    $exim->routes_as_ok('address@example.com',
+        {transport => 'local_smtp}, 'Checking routing');
+
+Checks that C<exim> with this configuration routes to the address
+given with the appropriate target results.
+
+The target is an arrayref of hashes (or as a special case a single
+hash), which matches against the addresses section of the result from
+L<_run_exim_bt>. Each address matches if all the elements given in the
+target hash match (so an empty hash will match anything).
+
+See L<_run_exim_bt> for hash elements.
+
+=head2 discards_ok
+
+    $exim->discards_ok($address, $optional_msg);
+    $exim->discards_ok('discards@example.com', 'Checking discarding');
+
+Checks that C<exim> with this configuration will discard the given
+address.
+
+=head2 undeliverable_ok
+
+    $exim->undeliverable_ok($address, $optional_msg);
+    $exim->undeliverable_ok('discards@example.com', 'Checking discarding');
+
+Checks that C<exim> with this configuration will consider the given
+address to be undeliverable.
+
+=head1 INTERNAL METHODS
+
+These methods are not intended to be run by end users, but are exposed.
+
+=head2 _run_exim_command
+
+Runs an exim instance with the appropriate config file and
+
+=head2 _run_exim_bv
+
+Runs C<exim -bV> with the appropriate configuration file, to check that
+the configuration file is valid. The output of the command is parsed
+and stashed and used to provide the functions to check versions numbers
+and capabilities.
+
+=head2 _run_exim_bt
+
+Runs C<exim -bt> (address test mode) with the appropriate configuration
+file, to check how the single address passed routes. The output of the
+command is parsed and passed back in the results.
+
+The results structure is hash that looks like:-
+    {
+        all_ok        => # no invocation errors
+        deliverable   => # number of deliverable addresses
+        undeliverable => # number of undeliverable addresses
+        total         => # total number of addresses
+        addresses     => {}
+    }
+
+The C<addresses> part of the structure has one key for each resultant
+address, the value of which is another hash, which may contain the
+following items:-
+
+=over 4
+
+=item * ok
+
+True if the address routed OK, False otherwise.
+
+=item * discarded
+
+True if the address was discarded by the router, false or missing if
+not.
+
+=item * data
+
+Scalar of lines picked out of exim output related to this address and
+not otherwise recognised.
+
+=item * router
+
+The router name used to handle this address.
+
+=item * transport
+
+The transport name used to handle this address.
+
+=item * address
+
+The final destination address.
+
+=item * original
+
+The original address that was used within this transformation. This is
+actually an arrayref each containing an address as several
+transformations may take place.
+
+=item * target
+
+For a local transport, the delivery target.
+
+=back
+
+=head2 _diag
+
+Spits out some L<Test::Builder> diagnostics for the last run command.
+Used internally by some tests on failure. The output data is the last
+error seen by L<IPC::Cmd> and the complete output of the command.
+
 =head1 ACKNOWLEDGEMENTS
 
 The module draws very strongly on the L<Test::Exim4::Routing> module by
@@ -753,6 +751,40 @@ experimental (meaning the API may change in a big way), so these
 changes were made as a new module in a name space that is intended for
 use by similar modules for other MTAs.
 
+=head1 INSTALLATION
+
+See perlmodinstall for information and options on installing Perl modules.
+
+=head1 BUGS AND LIMITATIONS
+
+No bugs have been reported.
+
+Please report any bugs or feature requests through the web interface at
+L<http://rt.cpan.org/Public/Dist/Display.html?Name=Test-MTA-Exim4>.
+
+=head1 AVAILABILITY
+
+The project homepage is L<http://search.cpan.org/dist/Test-MTA-Exim4>.
+
+The latest version of this module is available from the Comprehensive Perl
+Archive Network (CPAN). Visit L<http://www.perl.com/CPAN/> to find a CPAN
+site near you, or see L<http://search.cpan.org/dist/Test-MTA-Exim4/>.
+
+The development version lives at L<http://github.com/nigelm/Test-MTA-Exim4>
+and may be cloned from L<git://github.com/nigelm/Test-MTA-Exim4.git>.
+Instead of sending patches, please fork this project using the standard
+git and github infrastructure.
+
+=head1 AUTHOR
+
+Nigel Metheringham <nigelm@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2011 by Nigel Metheringham.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
 =cut
 
-1;    # End of Test::MTA::Exim4
