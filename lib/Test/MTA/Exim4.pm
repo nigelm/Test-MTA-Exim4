@@ -518,14 +518,16 @@ sub _run_exim_bv {
             }
             elsif (
                 m{ ^
-                    (   support \s+ for | # pick one of these
-                        lookups         | # in $1
+                    (   support \s+ for |       # pick one of these
+                        lookups         |       # in $1
                         authenticators  |
                         routers         |
                         transports
                     )
-                    : \s*               # followed by a colon
-                    (.*)                # and the rest of the line in $2
+                    (?: \s+ \( [a-z\s-]+ \) )?  # optional load type for 4.74+ - discarded
+                                                # eg (built-in)
+                    : \s*                       # followed by a colon
+                    (.*)                        # and the rest of the line in $2
                     $
                  }ix
               )
@@ -535,8 +537,7 @@ sub _run_exim_bv {
                 $type =~ tr/a-z/_/cs;
                 $type =~ s/s$//;             # strip trailing s
                 $res  =~ tr|a-z0-9_ /||cd;
-                my $table = { map { $_ => 1 } ( split( /[\s\/]/, $res ) ) };
-                $self->{_state}{config}{$type} = $table;
+                $self->{_state}{config}{$type}{$_} = 1 foreach ( split( /[\s\/]/, $res ) );
             }
             elsif (/Configuration file is (.*)/) {
                 $self->{_state}{exim_config_file} = $1;
