@@ -12,6 +12,16 @@ __PACKAGE__->mk_ro_accessors(qw[exim_path config_file test timeout]);
 
 # ABSTRACT: Test Anything interface for testing Exim4 configurations
 
+=begin :prelude
+
+=for test_synopsis
+1;
+__END__
+
+=for stopwords acknowledgements mtas Maischein checkable exim exim4 recognised subitem subitems vapourware
+
+=end :prelude
+
 =head1 SYNOPSIS
 
 L<Test::MTA::Exim4> allows the testing of an C<exim> installation
@@ -108,7 +118,7 @@ sub reset {
 
 # ------------------------------------------------------------------------
 
-=head2 config_ok 
+=head2 config_ok
 
 Checks that C<exim> considers the configuration file as syntactically
 valid. The config file must be specified when C<new> is called,
@@ -137,7 +147,7 @@ sub config_ok {
 
 # ------------------------------------------------------------------------
 
-=head2 exim_version 
+=head2 exim_version
 
 Returns the version of C<exim> seen when the configuration was checked.
 This is intended for use within your own tests for appropriate
@@ -150,7 +160,6 @@ versions, for example:-
 
 sub exim_version {
     my $self = shift;
-    my $msg  = shift;
 
     $self->_run_exim_bv;
 
@@ -159,7 +168,7 @@ sub exim_version {
 
 # ------------------------------------------------------------------------
 
-=head2 exim_build 
+=head2 exim_build
 
 Returns the build number of C<exim> seen when the configuration was
 checked. This is intended for use within your own tests for appropriate
@@ -169,7 +178,6 @@ versions/builds.
 
 sub exim_build {
     my $self = shift;
-    my $msg  = shift;
 
     $self->_run_exim_bv;
 
@@ -178,12 +186,12 @@ sub exim_build {
 
 # ------------------------------------------------------------------------
 
-=head2 has_capability 
+=head2 has_capability
 
     $exim->has_capability($type, $what, $optional_msg)
     $exim->has_capability('lookup', 'lsearch', 'Has lsearch capability')
 
-Checks that C<exim> has the appropriate capability.  This is taken from 
+Checks that C<exim> has the appropriate capability.  This is taken from
 the lists of capabilities listed by C<exim -bV>
 
 The types of capability are:-
@@ -206,6 +214,10 @@ The items within a capability are processed to be lowercase
 alphanumeric only - so C<iconv> rather than C<iconv()> as output by
 exim. The subitems (for example C<maildir> is a subitem of
 C<appendfile>) are treated as separately checkable items.
+
+If the version of C<exim> being used has both built-in and dynamic
+lookups (or potentially in later versions multiple types of other
+capabilities), then these are merged into a single capability list.
 
 =cut
 
@@ -235,7 +247,7 @@ sub has_capability {
 
 # ------------------------------------------------------------------------
 
-=head2 has_not_capability 
+=head2 has_not_capability
 
 Precisely the opposite of L<has_capability> with an opposite test - so
 fails if this does exist.
@@ -268,7 +280,7 @@ sub has_not_capability {
 
 # ------------------------------------------------------------------------
 
-=head2 routes_ok 
+=head2 routes_ok
 
     $exim->routes_ok($address, $optional_msg);
     $exim->routes_ok('address@example.com', 'Checking routing');
@@ -300,7 +312,7 @@ sub routes_ok {
 
 # ------------------------------------------------------------------------
 
-=head2 routes_as_ok 
+=head2 routes_as_ok
 
     $exim->routes_as_ok($address, $target, $optional_msg);
     $exim->routes_as_ok('address@example.com',
@@ -376,7 +388,7 @@ sub routes_as_ok {
 
 # ------------------------------------------------------------------------
 
-=head2 discards_ok 
+=head2 discards_ok
 
     $exim->discards_ok($address, $optional_msg);
     $exim->discards_ok('discards@example.com', 'Checking discarding');
@@ -411,7 +423,7 @@ sub discards_ok {
 
 # ------------------------------------------------------------------------
 
-=head2 undeliverable_ok 
+=head2 undeliverable_ok
 
     $exim->undeliverable_ok($address, $optional_msg);
     $exim->undeliverable_ok('discards@example.com', 'Checking discarding');
@@ -451,7 +463,7 @@ These methods are not intended to be run by end users, but are exposed.
 
 =head2 _run_exim_command
 
-Runs an exim instance with the appropriate config file and 
+Runs an exim instance with the appropriate config file and
 
 =cut
 
@@ -504,7 +516,7 @@ sub _run_exim_bv {
     return if ( $self->{_state}{checked}++ );
 
     # run command
-    my ( $success, $error_code, $full_buf, $stdout_buf, $stderr_buf ) =
+    my ( $success, undef, undef, $stdout_buf,undef ) =
       $self->_run_exim_command('-bV');
 
     # parse things out if command worked
@@ -601,7 +613,7 @@ The transport name used to handle this address.
 
 =item * address
 
-The final destination addresss.
+The final destination address.
 
 =item * original
 
@@ -632,7 +644,7 @@ sub _run_exim_bt {
     push( @options, '--', $address );
 
     # run command - use a -- divider to prevent funkiness in the address
-    my ( $success, $error_code, $full_buf, $stdout_buf, $stderr_buf ) =
+    my ( $success, undef, undef, $stdout_buf, undef ) =
       $self->_run_exim_command(@options);
 
     # as exim uses the exit value to signify how well things worked, and
