@@ -184,6 +184,174 @@ sub exim_build {
     return $self->{_state}{exim_build};
 }
 
+
+# ------------------------------------------------------------------------
+
+=head2 has_option
+
+    $exim->has_option($option, $optional_msg)
+
+Checks whether the named C<exim> option exists.  This is taken from
+the list of options listed by C<exim -bP>
+
+=cut
+
+sub has_option {
+    my $self   = shift;
+    my $option = shift;
+    my $msg    = shift;
+
+    $self->_run_exim_bv;
+    $self->_croak('Invalid exim config') unless ( $self->{_state}{config}{ok} );
+    $self->_run_exim_bp;
+
+    # pad the msg if not specified
+    $msg ||= sprintf( 'Checking for existence of %s option', $option );
+
+    $self->test->ok(exists $self->{_state}{option}{$option}, $msg)
+	|| $self->_diag;
+}
+
+# ------------------------------------------------------------------------
+
+=head2 has_not_option
+
+    $exim->has_not_option($option, $optional_msg)
+
+Precisely the opposite of L<has_option> with an opposite test - so
+fails if the option does exist.
+
+=cut
+
+sub has_not_option {
+    my $self   = shift;
+    my $option = shift;
+    my $msg    = shift;
+
+    $self->_run_exim_bv;
+    $self->_croak('Invalid exim config') unless ( $self->{_state}{config}{ok} );
+    $self->_run_exim_bp;
+
+    # pad the msg if not specified
+    $msg ||= sprintf( 'Checking for lack of existence of %s option', $option );
+
+    $self->test->ok(!exists $self->{_state}{option}{$option}, $msg)
+	|| $self->_diag;
+}
+
+# ------------------------------------------------------------------------
+
+=head2 option_is
+
+    $exim->option_is($option, $value, $optional_msg)
+
+Checks the named C<exim> option has the appropriate value.  This is taken from
+the list of options listed by C<exim -bP>
+
+=cut
+
+sub option_is {
+    my $self   = shift;
+    my $option = shift;
+    my $value  = shift;
+    my $msg    = shift;
+
+    $self->_run_exim_bv;
+    $self->_croak('Invalid exim config') unless ( $self->{_state}{config}{ok} );
+    $self->_run_exim_bp;
+
+    # pad the msg if not specified
+    $msg ||= sprintf( 'Checking for %s option', $option );
+
+    $self->test->is_eq($self->{_state}{option}{$option}, $value, $msg)
+	|| $self->_diag;
+}
+
+# ------------------------------------------------------------------------
+
+=head2 option_is_true
+
+    $exim->option_is_true($option, $optional_msg)
+
+Checks the named C<exim> option has a true value.  This is taken from
+the list of options listed by C<exim -bP>
+
+=cut
+
+sub option_is_true {
+    my $self   = shift;
+    my $option = shift;
+    my $msg    = shift;
+
+    $self->_run_exim_bv;
+    $self->_croak('Invalid exim config') unless ( $self->{_state}{config}{ok} );
+    $self->_run_exim_bp;
+
+    # pad the msg if not specified
+    $msg ||= sprintf( 'Checking for %s option', $option );
+
+    my $value = $option =~ s/^no_// ? undef : 1;
+    $self->test->is_eq($self->{_state}{option}{$option}, $value, $msg)
+	|| $self->_diag;
+}
+
+# ------------------------------------------------------------------------
+
+=head2 option_is_false
+
+    $exim->option_is_false($option, $optional_msg)
+
+Checks the named C<exim> option has a false value.  This is taken from
+the list of options listed by C<exim -bP>
+
+=cut
+
+sub option_is_false {
+    my $self   = shift;
+    my $option = shift;
+    my $msg    = shift;
+
+    $self->_run_exim_bv;
+    $self->_croak('Invalid exim config') unless ( $self->{_state}{config}{ok} );
+    $self->_run_exim_bp;
+
+    # pad the msg if not specified
+    $msg ||= sprintf( 'Checking for %s option', $option );
+
+    my $value = $option =~ s/^no_// ? 1 : undef;
+    $self->test->is_eq($self->{_state}{option}{$option}, $value, $msg)
+	|| $self->_diag;
+}
+
+# ------------------------------------------------------------------------
+
+=head2 expansion_is
+
+    $exim->expansion_is($string, $value, $optional_msg)
+
+Checks the named C<exim> option has a false value.  This is taken from
+the list of options listed by C<exim -bP>
+
+=cut
+
+sub expansion_is {
+    my $self   = shift;
+    my $string = shift;
+    my $expect = shift;
+    my $msg    = shift;
+
+    $self->_run_exim_bv;
+    $self->_croak('Invalid exim config') unless ( $self->{_state}{config}{ok} );
+
+    # pad the msg if not specified
+    $msg ||= sprintf( "Checking expansion of '%s'", $string );
+
+    my $got = $self->_run_exim_be($string);
+    chomp $got;
+    $self->test->is_eq($got, $expect, $msg)
+	|| $self->_diag;
+}
+
 # ------------------------------------------------------------------------
 
 =head2 has_capability
@@ -564,6 +732,66 @@ sub _run_exim_bv {
     else {
         $self->{_state}{config}{ok} = 0;
     }
+}
+
+# ------------------------------------------------------------------------
+
+=head2 _run_exim_bp
+
+Runs C<exim -bP> with the appropriate configuration file, to cause Exim to
+display the value of all the main configuration options. The output of the
+command is parsed and stashed and used to provide the functions to check
+individual option values.
+
+=cut
+
+sub _run_exim_bp {
+    my $self = shift;
+
+    # we only want to run this once per session
+    return if ( exists $self->{_state}{option} );
+
+    # initialize the option hash, because if we don't get anything parseable
+    # back the first time it probably won't succeed subsequently
+    $self->{_state}{option} = {};
+
+    # run command
+    my ( $success, undef, undef, $stdout_buf,undef ) =
+      $self->_run_exim_command('-bP');
+
+    # parse things out if command worked
+    if ($success) {
+        foreach ( @{$stdout_buf} ) {
+            chomp;
+	    if (/^(no_)?(\w+)(?: = (.*))?$/) {
+		my ($negate, $option, $value) = ($1, $2, $3);
+		$self->{_state}{option}{$option}
+		    = $negate ? undef : defined $value ? $value : 1;
+            }
+        }
+    }
+}
+
+# ------------------------------------------------------------------------
+
+=head2 _run_exim_be
+
+Runs C<exim -be>, with the appropriate configuration file, in expansion
+testing mode, to cause Exim to expand the specified string.
+
+=cut
+
+sub _run_exim_be {
+    my $self   = shift;
+    my $string = shift;
+
+    # run command
+    my ( $success, undef, undef, $stdout_buf,undef ) =
+      $self->_run_exim_command('-be', $string);
+
+    # parse things out if command worked
+
+    return $success && join("\n", @$stdout_buf, '');
 }
 
 # ------------------------------------------------------------------------
