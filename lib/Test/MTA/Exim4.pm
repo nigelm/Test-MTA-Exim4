@@ -325,6 +325,35 @@ sub option_is_false {
 
 # ------------------------------------------------------------------------
 
+=head2 expansion_is
+
+    $exim->expansion_is($string, $value, $optional_msg)
+
+Checks the named C<exim> option has a false value.  This is taken from
+the list of options listed by C<exim -bP>
+
+=cut
+
+sub expansion_is {
+    my $self   = shift;
+    my $string = shift;
+    my $expect = shift;
+    my $msg    = shift;
+
+    $self->_run_exim_bv;
+    $self->_croak('Invalid exim config') unless ( $self->{_state}{config}{ok} );
+
+    # pad the msg if not specified
+    $msg ||= sprintf( "Checking expansion of '%s'", $string );
+
+    my $got = $self->_run_exim_be($string);
+    chomp $got;
+    $self->test->is_eq($got, $expect, $msg)
+	|| $self->_diag;
+}
+
+# ------------------------------------------------------------------------
+
 =head2 has_capability
 
     $exim->has_capability($type, $what, $optional_msg)
@@ -741,6 +770,28 @@ sub _run_exim_bp {
             }
         }
     }
+}
+
+# ------------------------------------------------------------------------
+
+=head2 _run_exim_be
+
+Runs C<exim -be>, with the appropriate configuration file, in expansion
+testing mode, to cause Exim to expand the specified string.
+
+=cut
+
+sub _run_exim_be {
+    my $self   = shift;
+    my $string = shift;
+
+    # run command
+    my ( $success, undef, undef, $stdout_buf,undef ) =
+      $self->_run_exim_command('-be', $string);
+
+    # parse things out if command worked
+
+    return $success && join("\n", @$stdout_buf, '');
 }
 
 # ------------------------------------------------------------------------

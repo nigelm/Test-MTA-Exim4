@@ -69,6 +69,18 @@ EOS
     exit(0);
 }
 
+sub do_be {
+    my $config = shift;
+    my $string = shift;
+
+    if ( $string =~ /lookup{(\w+)}/ ) {
+        print $1 eq 'postmaster' ? "root\n" : "\n";
+    }
+    else {
+	print "$string\n";
+    }
+}
+
 sub do_bt;
 
 sub do_bt {
@@ -114,6 +126,10 @@ sub do_bt {
         }
         elsif (/^-bP/) {
             do_bp($config);
+        }
+        elsif (/^-be/) {
+            do_be(@ARGV);
+	    exit;
         }
         elsif (/^-bt/) {
             $addr_mode++;
