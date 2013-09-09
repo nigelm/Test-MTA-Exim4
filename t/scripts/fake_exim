@@ -33,6 +33,54 @@ sub do_bv {
     exit(0);
 }
 
+sub do_bp {
+    my $config = shift;
+
+    # output the basic stuff
+    print(<<EOS);
+accept_8bitmime
+acl_not_smtp = 
+acl_not_smtp_mime = 
+acl_not_smtp_start = 
+acl_smtp_auth = 
+acl_smtp_connect = 
+acl_smtp_data = acl_check_data
+acl_smtp_dkim = 
+acl_smtp_etrn = 
+acl_smtp_expn = 
+acl_smtp_helo = 
+acl_smtp_mail = acl_check_mail
+acl_smtp_mailauth = 
+acl_smtp_mime = acl_check_mime
+acl_smtp_notquit = 
+acl_smtp_predata = 
+acl_smtp_quit = 
+acl_smtp_rcpt = acl_check_rcpt
+acl_smtp_starttls = 
+acl_smtp_vrfy = 
+admin_groups =
+no_allow_domain_literals
+no_allow_mx_to_ip
+no_allow_utf8_domains
+auth_advertise_hosts = 
+auto_thaw = 0s
+av_scanner = clamd:/var/run/clamd.exim/clamd.sock
+EOS
+    exit(0);
+}
+
+sub do_be {
+    my $config = shift;
+    my $string = shift;
+
+    if ( $string =~ /lookup{(\w+)}/ ) {
+        print $1 eq 'postmaster' ? "root\n" : "\n";
+    }
+    else {
+	print "$string\n";
+    }
+}
+
 sub do_bt;
 
 sub do_bt {
@@ -75,6 +123,13 @@ sub do_bt {
         }
         elsif (/^-bV/) {
             do_bv($config);
+        }
+        elsif (/^-bP/) {
+            do_bp($config);
+        }
+        elsif (/^-be/) {
+            do_be(@ARGV);
+	    exit;
         }
         elsif (/^-bt/) {
             $addr_mode++;
