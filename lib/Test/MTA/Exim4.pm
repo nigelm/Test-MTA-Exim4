@@ -7,6 +7,9 @@ use base qw(Class::Accessor::Fast);
 use IPC::Cmd qw[can_run run];
 use Test::Builder;
 
+# VERSION
+# AUTHORITY
+
 __PACKAGE__->mk_accessors(qw[ debug]);
 __PACKAGE__->mk_ro_accessors(qw[exim_path config_file test timeout]);
 
@@ -18,7 +21,12 @@ __PACKAGE__->mk_ro_accessors(qw[exim_path config_file test timeout]);
 1;
 __END__
 
-=for stopwords acknowledgements mtas Maischein checkable exim exim4 recognised subitem subitems vapourware
+=begin stopwords
+
+acknowledgements mtas Maischein checkable exim exim4 recognised subitem
+subitems vapourware CPAN behaviour homepage ok
+
+=end stopwords
 
 =end :prelude
 
@@ -50,6 +58,15 @@ mechanism or compatibility layer between them is possible - this module
 has been produced to get something out as code is a better discussion
 point than vapourware ideas!
 
+Having said all that, it has now been around for several years, without
+substantial changes, so it may be as well to accept the API to be as stable as
+that of exim itself...
+
+=head1 EXAMPLES
+
+The C<sample> directory contains an example used for testing the <exim.org>
+installation, and should hopefully act as a reasonable example configuration.
+
 =head1 METHODS
 
 =cut
@@ -64,6 +81,44 @@ Create a new exim configuration testing object. You may pass
 configuration information in as a hash reference - this is the only
 point at which the locations of the exim binary and configuration file
 may be set.
+
+The options that can be passed in are:-
+
+=over 4
+
+=item * exim_path
+
+This is the path to the exim binary.  If this is not set, the default is taken
+as the first of the following:-
+
+=over 4
+
+=item * C<DEFAULT_EXIM_PATH> - environment variable
+
+=item * C<exim4> in the current path
+
+=item * C<exim> in the current path
+
+=item * C</usr/sbin/exim>
+
+=back
+
+=item * config_file
+
+The configuration file used.  If this is not set the value of the environment
+variable C<DEFAULT_EXIM_CONFIG_FILE> is used and if that is not set no config
+file is passed to the exim binary (meaning the default compiled into that is
+used).
+
+=item * test
+
+A test object - defaults to a new instance of L<Test::Builder>
+
+=item * timeout
+
+The timeout enforced on commands, in seconds.  Defaults to 5 seconds.
+
+=back
 
 =cut
 
@@ -631,7 +686,9 @@ These methods are not intended to be run by end users, but are exposed.
 
 =head2 _run_exim_command
 
-Runs an exim instance with the appropriate config file and
+Runs an exim instance with the appropriate configuration file and arguments.
+The configuration file is taken from the test object, the arguments are passed
+as arguments to this function.
 
 =cut
 

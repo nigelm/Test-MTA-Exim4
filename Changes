@@ -1,9 +1,9 @@
 Revision history for Test-MTA-Exim4
-{{$NEXT}}
 
-0.05    
+{{$NEXT}}
         Added methods to test config options
         Added methods to test string expansion
+        Documentation updates
 
 0.04      2011-02-11 13:58:07 Europe/London
         Converted to my current Dist::Zilla setup
