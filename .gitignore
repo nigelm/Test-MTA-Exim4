@@ -10,3 +10,5 @@ Test-MTA-Exim4-*
 META.yml
 *.bak
 .build
+.tidyall.d
+perltidy.LOG

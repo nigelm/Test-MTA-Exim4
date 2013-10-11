@@ -23,8 +23,7 @@ $exim->routes_ok('multiple4@local.com');
 # same checks in more complex form...
 $exim->routes_as_ok(
     'test@example.com',
-    {
-        router    => 'smart_route',
+    {   router    => 'smart_route',
         transport => 'remote_smtp',
         discarded => 0,
         ok        => 1
@@ -34,29 +33,23 @@ $exim->routes_as_ok( 'test@discard.com', { discarded => 1, ok => 1 } );
 $exim->routes_as_ok( 'test@undeliverable.com', { ok => 0 } );
 $exim->routes_as_ok(
     'multiple4@example.com',
-    [
-        {
-            router    => 'smart_route',
+    [   {   router    => 'smart_route',
             transport => 'remote_smtp'
         },
-        {
-            router    => 'smart_route',
+        {   router    => 'smart_route',
             transport => 'remote_smtp'
         },
-        {
-            router    => 'smart_route',
+        {   router    => 'smart_route',
             transport => 'remote_smtp'
         },
-        {
-            router    => 'smart_route',
+        {   router    => 'smart_route',
             transport => 'remote_smtp'
         },
     ]
 );
 $exim->routes_as_ok(
     'multiple4@local.com',
-    [
-        { transport => 'local_delivery' },
+    [   { transport => 'local_delivery' },
         { transport => 'local_delivery' },
         { transport => 'local_delivery' },
         { transport => 'local_delivery' },

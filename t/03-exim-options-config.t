@@ -15,7 +15,7 @@ $exim->config_ok;
 
 # simple option checks
 $exim->has_option('accept_8bitmime');
-$exim->option_is('accept_8bitmime', 1);
+$exim->option_is( 'accept_8bitmime', 1 );
 $exim->has_not_option('accept_9bitmime');
-$exim->option_is('allow_domain_literals', undef);
-$exim->option_is('acl_smtp_rcpt', 'acl_check_rcpt');
+$exim->option_is( 'allow_domain_literals', undef );
+$exim->option_is( 'acl_smtp_rcpt',         'acl_check_rcpt' );

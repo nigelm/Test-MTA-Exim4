@@ -14,6 +14,6 @@ ok( $exim, 'Created exim test object' );
 $exim->config_ok;
 
 # simple option checks
-$exim->expansion_is('${lookup{postmaster}lsearch{/etc/exim/aliases}}', 'root');
-$exim->expansion_is('${lookup{slartibartfast}lsearch{/etc/exim/aliases}}', '');
-$exim->expansion_is('xyzzy', 'xyzzy');
+$exim->expansion_is( '${lookup{postmaster}lsearch{/etc/exim/aliases}}',     'root' );
+$exim->expansion_is( '${lookup{slartibartfast}lsearch{/etc/exim/aliases}}', '' );
+$exim->expansion_is( 'xyzzy',                                               'xyzzy' );
