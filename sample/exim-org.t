@@ -17,10 +17,10 @@ ok( $exim, 'Created exim test object' );
 $exim->config_ok;
 
 # check the version numbers
-ok( ( $exim->exim_version ge '4.69' ), 'Check version number' );
+cmp_ok( $exim->exim_version, 'ge', '4.69', 'Check version number' );
 
 # build number - no idea why you want this!
-ok( ( $exim->exim_build == 1 ), 'Check build number' );
+cmp_ok( $exim->exim_build, '>=', 1, 'Check build number' );
 
 # check that binary has lsearch cdb mysql lookups
 foreach (qw[lsearch cdb mysql]) {
@@ -40,6 +40,34 @@ foreach (qw[appendfile maildir autoreply pipe smtp]) {
 # other stuff - we need ipv6 openssl content_scanning
 foreach (qw[ipv6 openssl content_scanning]) {
     $exim->has_capability( 'support_for', $_ );
+}
+
+# options set
+foreach (
+    qw[accept_8bitmime bounce_return_body bounce_return_message
+    check_rfc2047_length delivery_date_remove dns_csa_use_reverse
+    envelope_to_remove extract_addresses_remove_arguments local_from_check
+    queue_only_load_latch queue_only_override return_path_remove
+    smtp_accept_keepalive smtp_check_spool_space smtp_enforce_sync
+    smtp_etrn_serialize split_spool_directory strip_trailing_dot
+    syslog_duplication syslog_timestamp tcp_nodelay write_rejectlog]
+    ) {
+    $exim->option_is_true($_);
+}
+
+# options not set
+foreach (
+    qw[allow_domain_literals allow_mx_to_ip allow_utf8_domains
+    deliver_drop_privilege disable_ipv6 drop_cr gnutls_compat_mode
+    ignore_fromline_local ldap_start_tls local_sender_retain
+    log_timezone message_body_newlines message_logs
+    move_frozen_messages mua_wrapper preserve_message_logs
+    print_topbitchars prod_requires_admin queue_list_requires_admin
+    queue_only queue_run_in_order recipients_max_reject
+    smtp_return_error_details strict_acl_vars strip_excess_angle_brackets
+    tls_remember_esmtp]
+    ) {
+    $exim->option_is_false($_);
 }
 
 # ------------------------------------------------------------------------
