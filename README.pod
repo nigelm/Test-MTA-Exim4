@@ -158,8 +158,7 @@ of options listed by C<exim -bP>
 
     $exim->expansion_is($string, $value, $optional_msg)
 
-Checks the named C<exim> option has a false value.  This is taken from the list
-of options listed by C<exim -bP>
+Checks the given C<exim> expansion string ends up with the appropriate value.
 
 =head2 has_capability
 
@@ -340,16 +339,16 @@ See perlmodinstall for information and options on installing Perl modules.
 
 =head1 BUGS AND LIMITATIONS
 
-You can make new bug reports, and view existing ones, through the web interface
-at L<http://rt.cpan.org/Public/Dist/Display.html?Name=Test-MTA-Exim4>.
+You can make new bug reports, and view existing ones, through the
+web interface at L<http://rt.cpan.org/Public/Dist/Display.html?Name=Test-MTA-Exim4>.
 
 =head1 AVAILABILITY
 
 The project homepage is L<https://metacpan.org/release/Test-MTA-Exim4>.
 
 The latest version of this module is available from the Comprehensive Perl
-Archive Network (CPAN). Visit L<http://www.perl.com/CPAN/> to find a CPAN site
-near you, or see L<https://metacpan.org/module/Test::MTA::Exim4/>.
+Archive Network (CPAN). Visit L<http://www.perl.com/CPAN/> to find a CPAN
+site near you, or see L<https://metacpan.org/module/Test::MTA::Exim4/>.
 
 =head1 AUTHOR
 
@@ -357,8 +356,9 @@ Nigel Metheringham <nigelm@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2013 by Nigel Metheringham.
+This software is copyright (c) 2014 by Nigel Metheringham.
 
-This is free software; you can redistribute it and/or modify it under the same
-terms as the Perl 5 programming language system itself.
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
+=cut
