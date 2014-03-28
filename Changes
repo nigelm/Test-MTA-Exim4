@@ -1,4 +1,11 @@
 Revision history for Test-MTA-Exim4
+
+0.05      2014-03-28 09:39:15+00:00 Europe/London
+        Added methods to test config options
+        Added methods to test string expansion
+        Documentation updates
+        Made use of tidyall to keep formatting (please keep this dist tidy!)
+
 0.04      2011-02-11 13:58:07 Europe/London
         Converted to my current Dist::Zilla setup
         Now use [AssertOS] to keep away from Windows

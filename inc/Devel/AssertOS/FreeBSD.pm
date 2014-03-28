@@ -5,9 +5,9 @@ Devel::AssertOS::FreeBSD;
 
 use Devel::CheckOS;
 
-$VERSION = '1.0';
+$VERSION = '1.1';
 
-sub os_is { $^O eq 'freebsd' ? 1 : 0; }
+sub os_is { $^O =~ /^(gnuk)?freebsd$/ ? 1 : 0; }
 
 Devel::CheckOS::die_unsupported() unless(os_is());
 
