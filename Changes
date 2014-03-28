@@ -4,7 +4,7 @@ Revision history for Test-MTA-Exim4
         Added methods to test config options
         Added methods to test string expansion
         Documentation updates
-        Made use of tidyall to keep formatting - ideally you should set a git pre-commit as per https://metacpan.org/module/Code::TidyAll::Git::Precommit
+        Made use of tidyall to keep formatting (please keep this dist tidy!)
 
 0.04      2011-02-11 13:58:07 Europe/London
         Converted to my current Dist::Zilla setup

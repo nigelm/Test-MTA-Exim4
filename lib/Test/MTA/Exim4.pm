@@ -370,8 +370,7 @@ sub option_is_false {
 
     $exim->expansion_is($string, $value, $optional_msg)
 
-Checks the named C<exim> option has a false value.  This is taken from the list
-of options listed by C<exim -bP>
+Checks the given C<exim> expansion string ends up with the appropriate value.
 
 =cut
 
