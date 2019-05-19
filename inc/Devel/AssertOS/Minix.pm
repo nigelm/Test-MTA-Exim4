@@ -1,14 +1,15 @@
 package #
-Devel::AssertOS::MacOSX;
+Devel::AssertOS::Minix;
 
 use Devel::CheckOS;
 use strict;
 use warnings;
 no warnings 'redefine';
 
-our $VERSION = '1.2';
+our $VERSION = '1.0';
 
-sub os_is { $^O =~ /^darwin$/i ? 1 : 0; }
+
+sub os_is { ( $^O =~ /^minix$/i) ? 1 : 0; }
 
 Devel::CheckOS::die_unsupported() unless(os_is());
 
