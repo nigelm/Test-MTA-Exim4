@@ -1,6 +1,7 @@
 Revision history for Test-MTA-Exim4
 
 {{$NEXT}}
+        Updated dzil config to use more generic starter modules
 
 0.05      2014-03-28 09:39:15+00:00 Europe/London
         Added methods to test config options
