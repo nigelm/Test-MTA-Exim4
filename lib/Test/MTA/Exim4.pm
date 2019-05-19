@@ -729,7 +729,7 @@ sub _run_exim_bv {
                     (.*)                        # and the rest of the line in $2
                     $
                  }ix
-                ) {
+            ) {
                 my $type = lc($1);
                 my $res  = lc($2);
                 $type =~ tr/a-z/_/cs;
@@ -818,10 +818,15 @@ Runs C<exim -bt> (address test mode) with the appropriate configuration file,
 to check how the single address passed routes. The output of the command is
 parsed and passed back in the results.
 
-The results structure is hash that looks like:-     {         all_ok        =>
-# no invocation errors         deliverable   => # number of deliverable
-addresses         undeliverable => # number of undeliverable addresses        
-total         => # total number of addresses         addresses     => {}     }
+The results structure is a hash that looks like:-
+
+    {
+        all_ok        => # no invocation errors
+        deliverable   => # number of deliverable addresses
+        undeliverable => # number of undeliverable addresses
+        total         => # total number of addresses
+        addresses     => {}
+    }
 
 The C<addresses> part of the structure has one key for each resultant address,
 the value of which is another hash, which may contain the following items:-
