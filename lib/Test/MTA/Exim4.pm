@@ -711,7 +711,7 @@ sub _run_exim_bv {
         $self->{_state}{config}{ok} = 1;
         foreach ( @{$stdout_buf} ) {
             chomp;
-            if (/^Exim\s+version\s+([0-9\.]+)\s+#(\d+)/) {
+            if (/^Exim\s+version\s+([0-9\.]+)(?:_[0-9]+)?\s+#(\d+)/) {
                 $self->{_state}{exim_version} = $1;
                 $self->{_state}{exim_build}   = $2;
             }
